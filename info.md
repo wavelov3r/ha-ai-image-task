@@ -66,6 +66,8 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | Larghezza / Altezza | Misura finale in pixel (es. 800×480 per molti e-ink). |
 | Ridimensiona alla misura esatta | I backend rifiutano lati sotto i 512 px: l'integrazione chiede una misura più grande con lo stesso rapporto e poi riporta il file alla misura esatta. |
 | Modalità di adattamento | `cover` (ritaglia per riempire), `contain` (bande bianche), `stretch` (deforma). |
+| Formato file | `auto` (segue l'estensione), `PNG`, `JPEG`, `keep`. Pollinations restituisce **sempre JPEG**: per ESPHome `online_image` serve PNG. |
+| Modalità colore | `color`, `grayscale`, `bw` (dithering Floyd-Steinberg) — le ultime due riducono molto il peso per gli e-ink. |
 | Seed | `-1` = casuale a ogni run; valore fisso = risultati riproducibili. |
 | Qualità | `low/medium/high/hd`, solo per la famiglia `gptimage`. |
 | Sfondo trasparente | Solo famiglia `gptimage`. |
@@ -154,6 +156,34 @@ I backend usati da Pollinations (`zimage` in primis) rifiutano con un HTTP 422
 800×480 esatti, così il file su disco ha sempre la misura che hai impostato.
 Serve Pillow, dichiarato tra i requirements e installato da Home Assistant
 automaticamente; se manca, l'immagine viene salvata alla misura generata.
+
+## Uso con ESPHome `online_image`
+
+Pollinations risponde sempre con byte **JPEG**, qualunque estensione dia al
+file: rinominarlo `.png` produce l'errore `incorrect PNG signature` nel
+decoder di ESPHome. Con **Formato file = PNG** (o `auto` più un nome file che
+finisce in `.png`) l'integrazione ri-codifica davvero l'immagine in PNG
+8 bit non interlacciato, che è quello che il decoder si aspetta.
+
+```yaml
+online_image:
+  - url: "http://homeassistant.local:8123/local/einkfrigo/images/frigo_left.png"
+    id: frigo_left
+    format: PNG
+    type: GRAYSCALE        # oppure BINARY / RGB565
+    update_interval: 1h
+    resize: 800x480
+```
+
+Consigli per pannelli e-ink:
+
+- imposta larghezza/altezza uguali a quelle del pannello e lascia attivo
+  "Ridimensiona alla misura esatta": eviti il `resize` a bordo, che costa RAM;
+- **Modalità colore** `grayscale` per pannelli a scala di grigi, `bw` per i
+  bianco/nero: il dithering viene fatto da Home Assistant, molto meglio della
+  soglia secca applicata sull'ESP;
+- un PNG 800×480 in scala di grigi pesa circa 30-60 kB, un RGB anche 3-4 volte
+  tanto: su ESP32 senza PSRAM la differenza conta.
 
 ## Limiti e note
 
