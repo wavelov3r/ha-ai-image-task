@@ -19,6 +19,7 @@ import logging
 import aiohttp
 
 from ..const import MIN_IMAGE_BYTES
+from .pollinations import normalise_dimensions
 from .base import (
     ImageProvider,
     ImageRequest,
@@ -46,10 +47,11 @@ class OpenAICompatibleProvider(ImageProvider):
 
     async def async_generate(self, request: ImageRequest) -> ImageResult:
         url = f"{self._base_url}/v1/images/generations"
+        width, height = normalise_dimensions(request.width, request.height)
         payload: dict = {
             "prompt": request.full_prompt,
             "n": 1,
-            "size": f"{int(request.width)}x{int(request.height)}",
+            "size": f"{width}x{height}",
             "response_format": "b64_json",
         }
         if request.model:
@@ -70,7 +72,10 @@ class OpenAICompatibleProvider(ImageProvider):
                 url, json=payload, headers=headers, timeout=timeout
             ) as resp:
                 if resp.status in (401, 403):
-                    raise ProviderAuthError(f"Endpoint rejected the API key ({resp.status})")
+                    raise ProviderAuthError(
+                        f"Endpoint rejected the request ({resp.status}). "
+                        "Check the API key, or remove it if the endpoint is free."
+                    )
                 if resp.status in (429, 503):
                     retry_after = resp.headers.get("Retry-After")
                     raise ProviderRateLimit(
@@ -118,4 +123,6 @@ class OpenAICompatibleProvider(ImageProvider):
             model=request.model,
             seed=request.seed if request.seed >= 0 else None,
             revised_prompt=item.get("revised_prompt") or request.full_prompt,
+            width=width,
+            height=height,
         )

@@ -69,6 +69,10 @@ class ImageResult:
     model: str | None = None
     seed: int | None = None
     revised_prompt: str | None = None
+    #: dimensions actually requested to the backend (may differ from the ones
+    #: asked by the user when the backend has minimum-size constraints)
+    width: int | None = None
+    height: int | None = None
 
     @property
     def extension(self) -> str:
