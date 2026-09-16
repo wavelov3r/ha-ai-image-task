@@ -1,0 +1,89 @@
+generate:
+  name: Generate now
+  description: Force an immediate generation for one or both image slots.
+  fields:
+    config_entry_id:
+      name: Config entry
+      description: Entry to act on. Leave empty to target every AI Image Task entry.
+      required: false
+      selector:
+        config_entry:
+          integration: ai_image_task
+    slot:
+      name: Slot
+      description: "1, 2 or 'all'."
+      required: false
+      default: all
+      example: "1"
+      selector:
+        select:
+          options:
+            - "all"
+            - "1"
+            - "2"
+
+set_prompt:
+  name: Set prompt
+  description: >-
+    Change the prompt and/or the negative prompt of a slot at runtime, with no
+    length limit. The change lives until Home Assistant restarts unless you also
+    edit the integration options.
+  fields:
+    config_entry_id:
+      name: Config entry
+      required: false
+      selector:
+        config_entry:
+          integration: ai_image_task
+    slot:
+      name: Slot
+      description: Image slot (1 or 2).
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 2
+          mode: box
+    prompt:
+      name: Prompt
+      required: false
+      example: A cozy kitchen at sunrise, watercolor
+      selector:
+        text:
+          multiline: true
+    negative_prompt:
+      name: Negative prompt
+      required: false
+      example: text, watermark, blurry
+      selector:
+        text:
+          multiline: true
+    generate:
+      name: Generate immediately
+      description: Run a generation right after applying the new prompt.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+clear_history:
+  name: Clear history
+  description: Delete every archived copy kept for a slot.
+  fields:
+    config_entry_id:
+      name: Config entry
+      required: false
+      selector:
+        config_entry:
+          integration: ai_image_task
+    slot:
+      name: Slot
+      required: false
+      default: all
+      selector:
+        select:
+          options:
+            - "all"
+            - "1"
+            - "2"

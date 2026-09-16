@@ -1,0 +1,13 @@
+{
+  "domain": "ai_image_task",
+  "name": "AI Image Task",
+  "codeowners": ["@wavelov3r"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/wavelov3r/ha-ai-image-task",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/wavelov3r/ha-ai-image-task/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

@@ -1,0 +1,258 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AI Image Task - general settings",
+        "description": "Choose the image provider and how often the images should be refreshed.",
+        "data": {
+          "name": "Name",
+          "provider": "Provider",
+          "base_url": "API base URL (optional)",
+          "api_key": "API key (optional)",
+          "update_interval": "Update interval",
+          "update_interval_unit": "Interval unit",
+          "output_dir": "Output folder",
+          "retention_mode": "Retention policy",
+          "keep_count": "Keep last N images",
+          "keep_days": "Delete images older than (days)",
+          "history_subdir": "History subfolder",
+          "stagger_seconds": "Delay between the two images (s)",
+          "timeout": "Request timeout (s)",
+          "retries": "Retries on failure",
+          "negative_template": "Negative prompt template",
+          "write_metadata": "Write a .json file with the generation metadata",
+          "generate_on_start": "Generate right after startup / reload"
+        },
+        "data_description": {
+          "provider": "Pollinations works without an account. The OpenAI-compatible option targets any endpoint exposing /v1/images/generations.",
+          "base_url": "Leave empty for the provider default (https://gen.pollinations.ai). Use https://image.pollinations.ai for the legacy endpoint.",
+          "api_key": "Optional. Raises the rate limits and unlocks premium models.",
+          "update_interval": "How often both images are regenerated.",
+          "output_dir": "Absolute path inside Home Assistant. Anything under /config/www is reachable at /local/...",
+          "retention_mode": "Overwrite: only the current file. Keep last N: archives the previous versions and keeps the newest N. Keep for N days: archives and deletes anything older.",
+          "keep_count": "Only used by the 'Keep last N' policy.",
+          "keep_days": "Only used by the 'Keep for N days' policy.",
+          "history_subdir": "Subfolder of the output folder where old versions are archived. Leave empty to archive next to the current file.",
+          "stagger_seconds": "Anonymous Pollinations usage is limited to about one request every 15 seconds.",
+          "negative_template": "How the negative words are merged into the prompt. Placeholders: {prompt} and {negative}.",
+          "generate_on_start": "Disable if you prefer to wait for the first scheduled run."
+        }
+      },
+      "slot_1": {
+        "title": "Image 1",
+        "description": "Settings for the first image.",
+        "data": {
+          "enabled": "Enabled",
+          "name": "Slot name",
+          "filename": "File name",
+          "prompt": "Prompt",
+          "negative_prompt": "Negative prompt",
+          "model": "Model",
+          "width": "Width (px)",
+          "height": "Height (px)",
+          "seed": "Seed",
+          "quality": "Quality",
+          "transparent": "Transparent background",
+          "safe": "Safe mode",
+          "nologo": "Remove watermark",
+          "private": "Private generation",
+          "enhance": "Enhance the prompt",
+          "reference_image": "Reference image URL"
+        },
+        "data_description": {
+          "filename": "The current image always keeps this name, so dashboards can use a stable URL.",
+          "negative_prompt": "Comma separated words to avoid. They are appended to the prompt because Pollinations has no dedicated negative prompt parameter.",
+          "model": "zimage and flux are free. gptimage-family models may need an API key.",
+          "seed": "-1 means a new random seed on every run; a fixed value gives reproducible results.",
+          "quality": "Only honoured by gptimage, gptimage-large and gpt-image-2.",
+          "transparent": "Only honoured by gptimage-family models.",
+          "reference_image": "Optional. Used by editing/img2img models such as kontext, nanobanana and seedream."
+        }
+      },
+      "slot_2": {
+        "title": "Image 2",
+        "description": "Settings for the second image. Turn 'Enabled' off if you only need one image.",
+        "data": {
+          "enabled": "Enabled",
+          "name": "Slot name",
+          "filename": "File name",
+          "prompt": "Prompt",
+          "negative_prompt": "Negative prompt",
+          "model": "Model",
+          "width": "Width (px)",
+          "height": "Height (px)",
+          "seed": "Seed",
+          "quality": "Quality",
+          "transparent": "Transparent background",
+          "safe": "Safe mode",
+          "nologo": "Remove watermark",
+          "private": "Private generation",
+          "enhance": "Enhance the prompt",
+          "reference_image": "Reference image URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the provider.",
+      "invalid_auth": "The API key was rejected.",
+      "invalid_directory": "The output folder does not exist or is not writable."
+    },
+    "abort": {
+      "already_configured": "An entry with this name already exists."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI Image Task",
+        "menu_options": {
+          "general": "General settings",
+          "slot_1": "Image 1",
+          "slot_2": "Image 2"
+        }
+      },
+      "general": {
+        "title": "General settings",
+        "data": {
+          "provider": "Provider",
+          "base_url": "API base URL (optional)",
+          "api_key": "API key (optional)",
+          "update_interval": "Update interval",
+          "update_interval_unit": "Interval unit",
+          "output_dir": "Output folder",
+          "retention_mode": "Retention policy",
+          "keep_count": "Keep last N images",
+          "keep_days": "Delete images older than (days)",
+          "history_subdir": "History subfolder",
+          "stagger_seconds": "Delay between the two images (s)",
+          "timeout": "Request timeout (s)",
+          "retries": "Retries on failure",
+          "negative_template": "Negative prompt template",
+          "write_metadata": "Write a .json file with the generation metadata",
+          "generate_on_start": "Generate right after startup / reload"
+        }
+      },
+      "slot_1": {
+        "title": "Image 1",
+        "data": {
+          "enabled": "Enabled",
+          "name": "Slot name",
+          "filename": "File name",
+          "prompt": "Prompt",
+          "negative_prompt": "Negative prompt",
+          "model": "Model",
+          "width": "Width (px)",
+          "height": "Height (px)",
+          "seed": "Seed",
+          "quality": "Quality",
+          "transparent": "Transparent background",
+          "safe": "Safe mode",
+          "nologo": "Remove watermark",
+          "private": "Private generation",
+          "enhance": "Enhance the prompt",
+          "reference_image": "Reference image URL"
+        }
+      },
+      "slot_2": {
+        "title": "Image 2",
+        "data": {
+          "enabled": "Enabled",
+          "name": "Slot name",
+          "filename": "File name",
+          "prompt": "Prompt",
+          "negative_prompt": "Negative prompt",
+          "model": "Model",
+          "width": "Width (px)",
+          "height": "Height (px)",
+          "seed": "Seed",
+          "quality": "Quality",
+          "transparent": "Transparent background",
+          "safe": "Safe mode",
+          "nologo": "Remove watermark",
+          "private": "Private generation",
+          "enhance": "Enhance the prompt",
+          "reference_image": "Reference image URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the provider.",
+      "invalid_auth": "The API key was rejected.",
+      "invalid_directory": "The output folder does not exist or is not writable."
+    }
+  },
+  "selector": {
+    "interval_unit": {
+      "options": {
+        "minutes": "Minutes",
+        "hours": "Hours"
+      }
+    },
+    "retention_mode": {
+      "options": {
+        "overwrite": "Overwrite (no history)",
+        "keep_last": "Keep the last N images",
+        "keep_days": "Keep images for N days"
+      }
+    }
+  },
+  "entity": {
+    "image": {
+      "generated_image": { "name": "Image" }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "idle": "Idle",
+          "generating": "Generating",
+          "ok": "OK",
+          "error": "Error",
+          "disabled": "Disabled"
+        }
+      },
+      "last_generated": { "name": "Last generated" },
+      "history_count": { "name": "Archived images" }
+    },
+    "button": {
+      "generate_now": { "name": "Generate now" },
+      "clear_history": { "name": "Clear history" }
+    },
+    "switch": {
+      "auto_update": { "name": "Automatic update" }
+    },
+    "text": {
+      "prompt": { "name": "Prompt" },
+      "negative_prompt": { "name": "Negative prompt" }
+    }
+  },
+  "services": {
+    "generate": {
+      "name": "Generate now",
+      "description": "Force an immediate generation for one or both image slots.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
+        "slot": { "name": "Slot", "description": "1, 2 or all." }
+      }
+    },
+    "set_prompt": {
+      "name": "Set prompt",
+      "description": "Change the prompt and/or negative prompt of a slot at runtime.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
+        "slot": { "name": "Slot", "description": "Image slot (1 or 2)." },
+        "prompt": { "name": "Prompt", "description": "New prompt." },
+        "negative_prompt": { "name": "Negative prompt", "description": "New negative prompt." },
+        "generate": { "name": "Generate immediately", "description": "Run a generation right away." }
+      }
+    },
+    "clear_history": {
+      "name": "Clear history",
+      "description": "Delete every archived copy kept for a slot.",
+      "fields": {
+        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
+        "slot": { "name": "Slot", "description": "1, 2 or all." }
+      }
+    }
+  }
+}
