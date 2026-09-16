@@ -18,6 +18,7 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import storage
+from .image_utils import FIT_MODES
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
@@ -33,7 +34,9 @@ from .const import (
     CONF_RETENTION_MODE,
     CONF_RETRIES,
     CONF_SLOT_ENABLED,
+    CONF_SLOT_EXACT_SIZE,
     CONF_SLOT_FILENAME,
+    CONF_SLOT_FIT,
     CONF_SLOT_HEIGHT,
     CONF_SLOT_MODEL,
     CONF_SLOT_NAME,
@@ -48,6 +51,8 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_EXACT_SIZE,
+    DEFAULT_FIT,
     DEFAULT_GENERATE_ON_START,
     DEFAULT_HEIGHT,
     DEFAULT_HISTORY_SUBDIR,
@@ -282,6 +287,22 @@ def slot_schema(
             )
         ),
     }
+
+    fields[
+        vol.Required(
+            CONF_SLOT_EXACT_SIZE,
+            default=_get(defaults, CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE),
+        )
+    ] = selector.BooleanSelector()
+    fields[
+        vol.Required(CONF_SLOT_FIT, default=_get(defaults, CONF_SLOT_FIT, DEFAULT_FIT))
+    ] = selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=FIT_MODES,
+            translation_key="fit",
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
 
     if "quality" in extra:
         fields[

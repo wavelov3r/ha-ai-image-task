@@ -14,7 +14,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-from . import storage
+from . import image_utils, storage
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
@@ -30,7 +30,9 @@ from .const import (
     CONF_RETENTION_MODE,
     CONF_RETRIES,
     CONF_SLOT_ENABLED,
+    CONF_SLOT_EXACT_SIZE,
     CONF_SLOT_FILENAME,
+    CONF_SLOT_FIT,
     CONF_SLOT_HEIGHT,
     CONF_SLOT_MODEL,
     CONF_SLOT_NAME,
@@ -42,6 +44,8 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_EXACT_SIZE,
+    DEFAULT_FIT,
     DEFAULT_GENERATE_ON_START,
     DEFAULT_HEIGHT,
     DEFAULT_HISTORY_SUBDIR,
@@ -81,6 +85,8 @@ _CORE_SLOT_KEYS = {
     CONF_SLOT_WIDTH,
     CONF_SLOT_HEIGHT,
     CONF_SLOT_SEED,
+    CONF_SLOT_EXACT_SIZE,
+    CONF_SLOT_FIT,
 }
 
 
@@ -309,6 +315,25 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             _LOGGER.error("Generation failed for %s: %s", slot.name, slot.last_error)
             return False
 
+        target_w = int(slot.config.get(CONF_SLOT_WIDTH) or DEFAULT_WIDTH)
+        target_h = int(slot.config.get(CONF_SLOT_HEIGHT) or DEFAULT_HEIGHT)
+        resized = False
+        if bool(slot.config.get(CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE)) and (
+            result.width != target_w or result.height != target_h
+        ):
+            new_bytes, new_type = await self.hass.async_add_executor_job(
+                image_utils.fit_image,
+                result.content,
+                target_w,
+                target_h,
+                str(slot.config.get(CONF_SLOT_FIT) or DEFAULT_FIT),
+            )
+            if new_bytes is not result.content:
+                resized = len(new_bytes) != len(result.content)
+                result.content = new_bytes
+                if new_type:
+                    result.content_type = new_type
+
         metadata = None
         if bool(self._opt(CONF_WRITE_METADATA, DEFAULT_WRITE_METADATA)):
             metadata = {
@@ -320,8 +345,11 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
                 "prompt": slot.prompt,
                 "negative_prompt": slot.negative_prompt,
                 "final_prompt": result.revised_prompt,
-                "width": request.width,
-                "height": request.height,
+                "width": target_w,
+                "height": target_h,
+                "requested_width": result.width,
+                "requested_height": result.height,
+                "resized": resized,
                 "url": result.url,
             }
 

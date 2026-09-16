@@ -52,6 +52,8 @@ CONF_SLOT_SAFE: Final = "safe"
 CONF_SLOT_QUALITY: Final = "quality"
 CONF_SLOT_TRANSPARENT: Final = "transparent"
 CONF_SLOT_REFERENCE_IMAGE: Final = "reference_image"
+CONF_SLOT_EXACT_SIZE: Final = "exact_size"
+CONF_SLOT_FIT: Final = "fit"
 
 # ---------------------------------------------------------------------------
 # Retention
@@ -92,6 +94,8 @@ DEFAULT_HEIGHT: Final = 1024
 DEFAULT_SEED: Final = -1  # -1 -> random seed on every run
 DEFAULT_MODEL: Final = "zimage"
 DEFAULT_QUALITY: Final = "medium"
+DEFAULT_EXACT_SIZE: Final = True
+DEFAULT_FIT: Final = "cover"
 
 DEFAULT_SLOT_FILENAMES: Final = ["image_1.jpg", "image_2.jpg"]
 
