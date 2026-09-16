@@ -28,7 +28,7 @@ Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utili
 ## Installazione via HACS
 
 1. HACS → menu ⋮ → **Custom repositories**.
-2. URL: `https://github.com/wavelov3r/ha-ai-image-task`, categoria **Integration**.
+2. URL: `https://github.com/YOUR_GITHUB_USERNAME/ha-ai-image-task`, categoria **Integration**.
 3. Installa "AI Image Task" e riavvia Home Assistant.
 4. **Impostazioni → Dispositivi e servizi → Aggiungi integrazione → AI Image Task**.
 
