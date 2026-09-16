@@ -28,7 +28,7 @@ Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utili
 ## Installazione via HACS
 
 1. HACS → menu ⋮ → **Custom repositories**.
-2. URL: `https://github.com/YOUR_GITHUB_USERNAME/ha-ai-image-task`, categoria **Integration**.
+2. URL: `https://github.com/wavelov3r/ha-ai-image-task`, categoria **Integration**.
 3. Installa "AI Image Task" e riavvia Home Assistant.
 4. **Impostazioni → Dispositivi e servizi → Aggiungi integrazione → AI Image Task**.
 
@@ -63,7 +63,9 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | Nome file | Es. `frigo_left.jpg`. Il file corrente mantiene sempre questo nome. |
 | Prompt / Prompt negativo | Vedi nota sotto sui prompt negativi. |
 | Modello | `zimage` (default), `flux`, `turbo`, `kontext`, `klein`, `nanobanana`, `seedream`, `qwen-image`, `wan-image`, `gptimage`, `p-image`. Si può digitare un modello non in elenco. |
-| Larghezza / Altezza | In pixel (es. 800×480 per molti e-ink). |
+| Larghezza / Altezza | Misura finale in pixel (es. 800×480 per molti e-ink). |
+| Ridimensiona alla misura esatta | I backend rifiutano lati sotto i 512 px: l'integrazione chiede una misura più grande con lo stesso rapporto e poi riporta il file alla misura esatta. |
+| Modalità di adattamento | `cover` (ritaglia per riempire), `contain` (bande bianche), `stretch` (deforma). |
 | Seed | `-1` = casuale a ogni run; valore fisso = risultati riproducibili. |
 | Qualità | `low/medium/high/hd`, solo per la famiglia `gptimage`. |
 | Sfondo trasparente | Solo famiglia `gptimage`. |
@@ -143,6 +145,15 @@ automation:
             {{ now().strftime('%B') }}, flat colors, high contrast, no text
           generate: true
 ```
+
+## Dimensioni e limiti dei backend
+
+I backend usati da Pollinations (`zimage` in primis) rifiutano con un HTTP 422
+(`greater_than_equal`) le richieste con un lato sotto i **512 px**. Se chiedi
+800×480 l'integrazione genera 856×512 mantenendo il rapporto e poi ritaglia a
+800×480 esatti, così il file su disco ha sempre la misura che hai impostato.
+Serve Pillow, dichiarato tra i requirements e installato da Home Assistant
+automaticamente; se manca, l'immagine viene salvata alla misura generata.
 
 ## Limiti e note
 
