@@ -57,7 +57,9 @@
           "nologo": "Rimuovi filigrana",
           "private": "Generazione privata",
           "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento"
+          "reference_image": "URL immagine di riferimento",
+          "exact_size": "Ridimensiona alla misura esatta",
+          "fit": "Modalità di adattamento"
         },
         "data_description": {
           "filename": "L'immagine corrente mantiene sempre questo nome, così le dashboard possono usare un URL stabile.",
@@ -66,7 +68,11 @@
           "seed": "-1 genera un seed casuale a ogni esecuzione; un valore fisso dà risultati riproducibili.",
           "quality": "Rispettato solo da gptimage, gptimage-large e gpt-image-2.",
           "transparent": "Rispettato solo dai modelli della famiglia gptimage.",
-          "reference_image": "Facoltativo. Usato dai modelli di editing/img2img come kontext, nanobanana e seedream."
+          "reference_image": "Facoltativo. Usato dai modelli di editing/img2img come kontext, nanobanana e seedream.",
+          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
         }
       },
       "slot_2": {
@@ -88,7 +94,15 @@
           "nologo": "Rimuovi filigrana",
           "private": "Generazione privata",
           "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento"
+          "reference_image": "URL immagine di riferimento",
+          "exact_size": "Ridimensiona alla misura esatta",
+          "fit": "Modalità di adattamento"
+        },
+        "data_description": {
+          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
         }
       }
     },
@@ -150,7 +164,15 @@
           "nologo": "Rimuovi filigrana",
           "private": "Generazione privata",
           "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento"
+          "reference_image": "URL immagine di riferimento",
+          "exact_size": "Ridimensiona alla misura esatta",
+          "fit": "Modalità di adattamento"
+        },
+        "data_description": {
+          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
         }
       },
       "slot_2": {
@@ -171,7 +193,15 @@
           "nologo": "Rimuovi filigrana",
           "private": "Generazione privata",
           "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento"
+          "reference_image": "URL immagine di riferimento",
+          "exact_size": "Ridimensiona alla misura esatta",
+          "fit": "Modalità di adattamento"
+        },
+        "data_description": {
+          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
+          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
         }
       }
     },
@@ -194,11 +224,20 @@
         "keep_last": "Conserva le ultime N immagini",
         "keep_days": "Conserva le immagini per N giorni"
       }
+    },
+    "fit": {
+      "options": {
+        "cover": "Cover (ritaglia)",
+        "contain": "Contain (bande bianche)",
+        "stretch": "Stretch (deforma)"
+      }
     }
   },
   "entity": {
     "image": {
-      "generated_image": { "name": "Immagine" }
+      "generated_image": {
+        "name": "Immagine"
+      }
     },
     "sensor": {
       "status": {
@@ -211,19 +250,33 @@
           "disabled": "Disattivato"
         }
       },
-      "last_generated": { "name": "Ultima generazione" },
-      "history_count": { "name": "Immagini archiviate" }
+      "last_generated": {
+        "name": "Ultima generazione"
+      },
+      "history_count": {
+        "name": "Immagini archiviate"
+      }
     },
     "button": {
-      "generate_now": { "name": "Genera adesso" },
-      "clear_history": { "name": "Svuota storico" }
+      "generate_now": {
+        "name": "Genera adesso"
+      },
+      "clear_history": {
+        "name": "Svuota storico"
+      }
     },
     "switch": {
-      "auto_update": { "name": "Aggiornamento automatico" }
+      "auto_update": {
+        "name": "Aggiornamento automatico"
+      }
     },
     "text": {
-      "prompt": { "name": "Prompt" },
-      "negative_prompt": { "name": "Prompt negativo" }
+      "prompt": {
+        "name": "Prompt"
+      },
+      "negative_prompt": {
+        "name": "Prompt negativo"
+      }
     }
   },
   "services": {
@@ -231,27 +284,54 @@
       "name": "Genera adesso",
       "description": "Forza la generazione immediata di uno o entrambi gli slot.",
       "fields": {
-        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
-        "slot": { "name": "Slot", "description": "1, 2 oppure all." }
+        "config_entry_id": {
+          "name": "Configurazione",
+          "description": "Voce su cui agire."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "1, 2 oppure all."
+        }
       }
     },
     "set_prompt": {
       "name": "Imposta prompt",
       "description": "Cambia prompt e/o prompt negativo di uno slot a runtime.",
       "fields": {
-        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
-        "slot": { "name": "Slot", "description": "Slot immagine (1 o 2)." },
-        "prompt": { "name": "Prompt", "description": "Nuovo prompt." },
-        "negative_prompt": { "name": "Prompt negativo", "description": "Nuovo prompt negativo." },
-        "generate": { "name": "Genera subito", "description": "Avvia subito una generazione." }
+        "config_entry_id": {
+          "name": "Configurazione",
+          "description": "Voce su cui agire."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "Slot immagine (1 o 2)."
+        },
+        "prompt": {
+          "name": "Prompt",
+          "description": "Nuovo prompt."
+        },
+        "negative_prompt": {
+          "name": "Prompt negativo",
+          "description": "Nuovo prompt negativo."
+        },
+        "generate": {
+          "name": "Genera subito",
+          "description": "Avvia subito una generazione."
+        }
       }
     },
     "clear_history": {
       "name": "Svuota storico",
       "description": "Elimina tutte le copie archiviate di uno slot.",
       "fields": {
-        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
-        "slot": { "name": "Slot", "description": "1, 2 oppure all." }
+        "config_entry_id": {
+          "name": "Configurazione",
+          "description": "Voce su cui agire."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "1, 2 oppure all."
+        }
       }
     }
   }

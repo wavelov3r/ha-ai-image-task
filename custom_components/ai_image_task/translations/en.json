@@ -57,7 +57,9 @@
           "nologo": "Remove watermark",
           "private": "Private generation",
           "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL"
+          "reference_image": "Reference image URL",
+          "exact_size": "Resize to the exact size",
+          "fit": "Resize mode"
         },
         "data_description": {
           "filename": "The current image always keeps this name, so dashboards can use a stable URL.",
@@ -66,7 +68,11 @@
           "seed": "-1 means a new random seed on every run; a fixed value gives reproducible results.",
           "quality": "Only honoured by gptimage, gptimage-large and gpt-image-2.",
           "transparent": "Only honoured by gptimage-family models.",
-          "reference_image": "Optional. Used by editing/img2img models such as kontext, nanobanana and seedream."
+          "reference_image": "Optional. Used by editing/img2img models such as kontext, nanobanana and seedream.",
+          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
+          "fit": "cover crops to fill, contain adds white bars, stretch distorts."
         }
       },
       "slot_2": {
@@ -88,7 +94,15 @@
           "nologo": "Remove watermark",
           "private": "Private generation",
           "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL"
+          "reference_image": "Reference image URL",
+          "exact_size": "Resize to the exact size",
+          "fit": "Resize mode"
+        },
+        "data_description": {
+          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
+          "fit": "cover crops to fill, contain adds white bars, stretch distorts."
         }
       }
     },
@@ -150,7 +164,15 @@
           "nologo": "Remove watermark",
           "private": "Private generation",
           "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL"
+          "reference_image": "Reference image URL",
+          "exact_size": "Resize to the exact size",
+          "fit": "Resize mode"
+        },
+        "data_description": {
+          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
+          "fit": "cover crops to fill, contain adds white bars, stretch distorts."
         }
       },
       "slot_2": {
@@ -171,7 +193,15 @@
           "nologo": "Remove watermark",
           "private": "Private generation",
           "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL"
+          "reference_image": "Reference image URL",
+          "exact_size": "Resize to the exact size",
+          "fit": "Resize mode"
+        },
+        "data_description": {
+          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
+          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
+          "fit": "cover crops to fill, contain adds white bars, stretch distorts."
         }
       }
     },
@@ -194,11 +224,20 @@
         "keep_last": "Keep the last N images",
         "keep_days": "Keep images for N days"
       }
+    },
+    "fit": {
+      "options": {
+        "cover": "Cover (crop)",
+        "contain": "Contain (white bars)",
+        "stretch": "Stretch"
+      }
     }
   },
   "entity": {
     "image": {
-      "generated_image": { "name": "Image" }
+      "generated_image": {
+        "name": "Image"
+      }
     },
     "sensor": {
       "status": {
@@ -211,19 +250,33 @@
           "disabled": "Disabled"
         }
       },
-      "last_generated": { "name": "Last generated" },
-      "history_count": { "name": "Archived images" }
+      "last_generated": {
+        "name": "Last generated"
+      },
+      "history_count": {
+        "name": "Archived images"
+      }
     },
     "button": {
-      "generate_now": { "name": "Generate now" },
-      "clear_history": { "name": "Clear history" }
+      "generate_now": {
+        "name": "Generate now"
+      },
+      "clear_history": {
+        "name": "Clear history"
+      }
     },
     "switch": {
-      "auto_update": { "name": "Automatic update" }
+      "auto_update": {
+        "name": "Automatic update"
+      }
     },
     "text": {
-      "prompt": { "name": "Prompt" },
-      "negative_prompt": { "name": "Negative prompt" }
+      "prompt": {
+        "name": "Prompt"
+      },
+      "negative_prompt": {
+        "name": "Negative prompt"
+      }
     }
   },
   "services": {
@@ -231,27 +284,54 @@
       "name": "Generate now",
       "description": "Force an immediate generation for one or both image slots.",
       "fields": {
-        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
-        "slot": { "name": "Slot", "description": "1, 2 or all." }
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Entry to act on."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "1, 2 or all."
+        }
       }
     },
     "set_prompt": {
       "name": "Set prompt",
       "description": "Change the prompt and/or negative prompt of a slot at runtime.",
       "fields": {
-        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
-        "slot": { "name": "Slot", "description": "Image slot (1 or 2)." },
-        "prompt": { "name": "Prompt", "description": "New prompt." },
-        "negative_prompt": { "name": "Negative prompt", "description": "New negative prompt." },
-        "generate": { "name": "Generate immediately", "description": "Run a generation right away." }
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Entry to act on."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "Image slot (1 or 2)."
+        },
+        "prompt": {
+          "name": "Prompt",
+          "description": "New prompt."
+        },
+        "negative_prompt": {
+          "name": "Negative prompt",
+          "description": "New negative prompt."
+        },
+        "generate": {
+          "name": "Generate immediately",
+          "description": "Run a generation right away."
+        }
       }
     },
     "clear_history": {
       "name": "Clear history",
       "description": "Delete every archived copy kept for a slot.",
       "fields": {
-        "config_entry_id": { "name": "Config entry", "description": "Entry to act on." },
-        "slot": { "name": "Slot", "description": "1, 2 or all." }
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Entry to act on."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "1, 2 or all."
+        }
       }
     }
   }
