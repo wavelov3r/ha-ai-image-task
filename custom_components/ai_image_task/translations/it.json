@@ -59,7 +59,9 @@
           "enhance": "Migliora il prompt",
           "reference_image": "URL immagine di riferimento",
           "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento"
+          "fit": "Modalità di adattamento",
+          "output_format": "Formato file",
+          "color_mode": "Modalità colore"
         },
         "data_description": {
           "filename": "L'immagine corrente mantiene sempre questo nome, così le dashboard possono usare un URL stabile.",
@@ -72,7 +74,9 @@
           "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
+          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
+          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink."
         }
       },
       "slot_2": {
@@ -96,13 +100,17 @@
           "enhance": "Migliora il prompt",
           "reference_image": "URL immagine di riferimento",
           "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento"
+          "fit": "Modalità di adattamento",
+          "output_format": "Formato file",
+          "color_mode": "Modalità colore"
         },
         "data_description": {
           "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
+          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
+          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink."
         }
       }
     },
@@ -166,13 +174,17 @@
           "enhance": "Migliora il prompt",
           "reference_image": "URL immagine di riferimento",
           "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento"
+          "fit": "Modalità di adattamento",
+          "output_format": "Formato file",
+          "color_mode": "Modalità colore"
         },
         "data_description": {
           "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
+          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
+          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink."
         }
       },
       "slot_2": {
@@ -195,13 +207,17 @@
           "enhance": "Migliora il prompt",
           "reference_image": "URL immagine di riferimento",
           "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento"
+          "fit": "Modalità di adattamento",
+          "output_format": "Formato file",
+          "color_mode": "Modalità colore"
         },
         "data_description": {
           "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
           "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma."
+          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
+          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
+          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink."
         }
       }
     },
@@ -230,6 +246,21 @@
         "cover": "Cover (ritaglia)",
         "contain": "Contain (bande bianche)",
         "stretch": "Stretch (deforma)"
+      }
+    },
+    "output_format": {
+      "options": {
+        "auto": "Auto (dall'estensione del file)",
+        "png": "PNG",
+        "jpeg": "JPEG",
+        "keep": "Lascia come arriva dal servizio"
+      }
+    },
+    "color_mode": {
+      "options": {
+        "color": "Colore",
+        "grayscale": "Scala di grigi",
+        "bw": "Bianco e nero (dithering)"
       }
     }
   },
