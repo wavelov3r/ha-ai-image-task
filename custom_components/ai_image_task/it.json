@@ -1,0 +1,258 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AI Image Task - impostazioni generali",
+        "description": "Scegli il servizio di generazione e ogni quanto rigenerare le immagini.",
+        "data": {
+          "name": "Nome",
+          "provider": "Servizio",
+          "base_url": "URL base API (opzionale)",
+          "api_key": "Chiave API (opzionale)",
+          "update_interval": "Intervallo di aggiornamento",
+          "update_interval_unit": "Unità dell'intervallo",
+          "output_dir": "Cartella di destinazione",
+          "retention_mode": "Politica di conservazione",
+          "keep_count": "Conserva le ultime N immagini",
+          "keep_days": "Elimina le immagini più vecchie di (giorni)",
+          "history_subdir": "Sottocartella storico",
+          "stagger_seconds": "Attesa tra le due immagini (s)",
+          "timeout": "Timeout richiesta (s)",
+          "retries": "Tentativi in caso di errore",
+          "negative_template": "Template del prompt negativo",
+          "write_metadata": "Scrivi un file .json con i metadati della generazione",
+          "generate_on_start": "Genera subito all'avvio / al ricaricamento"
+        },
+        "data_description": {
+          "provider": "Pollinations funziona senza account. L'opzione OpenAI-compatible punta a qualsiasi endpoint che esponga /v1/images/generations.",
+          "base_url": "Lascia vuoto per il default (https://gen.pollinations.ai). Usa https://image.pollinations.ai per l'endpoint legacy.",
+          "api_key": "Facoltativa. Aumenta i limiti di frequenza e sblocca i modelli premium.",
+          "update_interval": "Ogni quanto vengono rigenerate entrambe le immagini.",
+          "output_dir": "Percorso assoluto dentro Home Assistant. Tutto ciò che sta sotto /config/www è raggiungibile da /local/...",
+          "retention_mode": "Sovrascrivi: solo il file corrente. Conserva le ultime N: archivia le versioni precedenti tenendo le N più recenti. Conserva per N giorni: archivia ed elimina quelle più vecchie.",
+          "keep_count": "Usato solo dalla politica 'Conserva le ultime N'.",
+          "keep_days": "Usato solo dalla politica 'Conserva per N giorni'.",
+          "history_subdir": "Sottocartella in cui archiviare le versioni precedenti. Lascia vuoto per archiviarle accanto al file corrente.",
+          "stagger_seconds": "L'uso anonimo di Pollinations è limitato a circa una richiesta ogni 15 secondi.",
+          "negative_template": "Come le parole negative vengono unite al prompt. Segnaposto: {prompt} e {negative}.",
+          "generate_on_start": "Disattiva se preferisci attendere la prima esecuzione pianificata."
+        }
+      },
+      "slot_1": {
+        "title": "Immagine 1",
+        "description": "Impostazioni della prima immagine.",
+        "data": {
+          "enabled": "Attiva",
+          "name": "Nome slot",
+          "filename": "Nome file",
+          "prompt": "Prompt",
+          "negative_prompt": "Prompt negativo",
+          "model": "Modello",
+          "width": "Larghezza (px)",
+          "height": "Altezza (px)",
+          "seed": "Seed",
+          "quality": "Qualità",
+          "transparent": "Sfondo trasparente",
+          "safe": "Modalità sicura",
+          "nologo": "Rimuovi filigrana",
+          "private": "Generazione privata",
+          "enhance": "Migliora il prompt",
+          "reference_image": "URL immagine di riferimento"
+        },
+        "data_description": {
+          "filename": "L'immagine corrente mantiene sempre questo nome, così le dashboard possono usare un URL stabile.",
+          "negative_prompt": "Parole da evitare separate da virgola. Vengono accodate al prompt perché Pollinations non ha un parametro dedicato.",
+          "model": "zimage e flux sono gratuiti. I modelli della famiglia gptimage possono richiedere una chiave API.",
+          "seed": "-1 genera un seed casuale a ogni esecuzione; un valore fisso dà risultati riproducibili.",
+          "quality": "Rispettato solo da gptimage, gptimage-large e gpt-image-2.",
+          "transparent": "Rispettato solo dai modelli della famiglia gptimage.",
+          "reference_image": "Facoltativo. Usato dai modelli di editing/img2img come kontext, nanobanana e seedream."
+        }
+      },
+      "slot_2": {
+        "title": "Immagine 2",
+        "description": "Impostazioni della seconda immagine. Disattiva 'Attiva' se ti serve una sola immagine.",
+        "data": {
+          "enabled": "Attiva",
+          "name": "Nome slot",
+          "filename": "Nome file",
+          "prompt": "Prompt",
+          "negative_prompt": "Prompt negativo",
+          "model": "Modello",
+          "width": "Larghezza (px)",
+          "height": "Altezza (px)",
+          "seed": "Seed",
+          "quality": "Qualità",
+          "transparent": "Sfondo trasparente",
+          "safe": "Modalità sicura",
+          "nologo": "Rimuovi filigrana",
+          "private": "Generazione privata",
+          "enhance": "Migliora il prompt",
+          "reference_image": "URL immagine di riferimento"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile contattare il servizio.",
+      "invalid_auth": "Chiave API rifiutata.",
+      "invalid_directory": "La cartella di destinazione non esiste o non è scrivibile."
+    },
+    "abort": {
+      "already_configured": "Esiste già una configurazione con questo nome."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI Image Task",
+        "menu_options": {
+          "general": "Impostazioni generali",
+          "slot_1": "Immagine 1",
+          "slot_2": "Immagine 2"
+        }
+      },
+      "general": {
+        "title": "Impostazioni generali",
+        "data": {
+          "provider": "Servizio",
+          "base_url": "URL base API (opzionale)",
+          "api_key": "Chiave API (opzionale)",
+          "update_interval": "Intervallo di aggiornamento",
+          "update_interval_unit": "Unità dell'intervallo",
+          "output_dir": "Cartella di destinazione",
+          "retention_mode": "Politica di conservazione",
+          "keep_count": "Conserva le ultime N immagini",
+          "keep_days": "Elimina le immagini più vecchie di (giorni)",
+          "history_subdir": "Sottocartella storico",
+          "stagger_seconds": "Attesa tra le due immagini (s)",
+          "timeout": "Timeout richiesta (s)",
+          "retries": "Tentativi in caso di errore",
+          "negative_template": "Template del prompt negativo",
+          "write_metadata": "Scrivi un file .json con i metadati",
+          "generate_on_start": "Genera subito all'avvio / al ricaricamento"
+        }
+      },
+      "slot_1": {
+        "title": "Immagine 1",
+        "data": {
+          "enabled": "Attiva",
+          "name": "Nome slot",
+          "filename": "Nome file",
+          "prompt": "Prompt",
+          "negative_prompt": "Prompt negativo",
+          "model": "Modello",
+          "width": "Larghezza (px)",
+          "height": "Altezza (px)",
+          "seed": "Seed",
+          "quality": "Qualità",
+          "transparent": "Sfondo trasparente",
+          "safe": "Modalità sicura",
+          "nologo": "Rimuovi filigrana",
+          "private": "Generazione privata",
+          "enhance": "Migliora il prompt",
+          "reference_image": "URL immagine di riferimento"
+        }
+      },
+      "slot_2": {
+        "title": "Immagine 2",
+        "data": {
+          "enabled": "Attiva",
+          "name": "Nome slot",
+          "filename": "Nome file",
+          "prompt": "Prompt",
+          "negative_prompt": "Prompt negativo",
+          "model": "Modello",
+          "width": "Larghezza (px)",
+          "height": "Altezza (px)",
+          "seed": "Seed",
+          "quality": "Qualità",
+          "transparent": "Sfondo trasparente",
+          "safe": "Modalità sicura",
+          "nologo": "Rimuovi filigrana",
+          "private": "Generazione privata",
+          "enhance": "Migliora il prompt",
+          "reference_image": "URL immagine di riferimento"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile contattare il servizio.",
+      "invalid_auth": "Chiave API rifiutata.",
+      "invalid_directory": "La cartella di destinazione non esiste o non è scrivibile."
+    }
+  },
+  "selector": {
+    "interval_unit": {
+      "options": {
+        "minutes": "Minuti",
+        "hours": "Ore"
+      }
+    },
+    "retention_mode": {
+      "options": {
+        "overwrite": "Sovrascrivi (nessuno storico)",
+        "keep_last": "Conserva le ultime N immagini",
+        "keep_days": "Conserva le immagini per N giorni"
+      }
+    }
+  },
+  "entity": {
+    "image": {
+      "generated_image": { "name": "Immagine" }
+    },
+    "sensor": {
+      "status": {
+        "name": "Stato",
+        "state": {
+          "idle": "In attesa",
+          "generating": "Generazione in corso",
+          "ok": "OK",
+          "error": "Errore",
+          "disabled": "Disattivato"
+        }
+      },
+      "last_generated": { "name": "Ultima generazione" },
+      "history_count": { "name": "Immagini archiviate" }
+    },
+    "button": {
+      "generate_now": { "name": "Genera adesso" },
+      "clear_history": { "name": "Svuota storico" }
+    },
+    "switch": {
+      "auto_update": { "name": "Aggiornamento automatico" }
+    },
+    "text": {
+      "prompt": { "name": "Prompt" },
+      "negative_prompt": { "name": "Prompt negativo" }
+    }
+  },
+  "services": {
+    "generate": {
+      "name": "Genera adesso",
+      "description": "Forza la generazione immediata di uno o entrambi gli slot.",
+      "fields": {
+        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
+        "slot": { "name": "Slot", "description": "1, 2 oppure all." }
+      }
+    },
+    "set_prompt": {
+      "name": "Imposta prompt",
+      "description": "Cambia prompt e/o prompt negativo di uno slot a runtime.",
+      "fields": {
+        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
+        "slot": { "name": "Slot", "description": "Slot immagine (1 o 2)." },
+        "prompt": { "name": "Prompt", "description": "Nuovo prompt." },
+        "negative_prompt": { "name": "Prompt negativo", "description": "Nuovo prompt negativo." },
+        "generate": { "name": "Genera subito", "description": "Avvia subito una generazione." }
+      }
+    },
+    "clear_history": {
+      "name": "Svuota storico",
+      "description": "Elimina tutte le copie archiviate di uno slot.",
+      "fields": {
+        "config_entry_id": { "name": "Configurazione", "description": "Voce su cui agire." },
+        "slot": { "name": "Slot", "description": "1, 2 oppure all." }
+      }
+    }
+  }
+}
