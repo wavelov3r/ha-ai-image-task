@@ -54,6 +54,8 @@ CONF_SLOT_TRANSPARENT: Final = "transparent"
 CONF_SLOT_REFERENCE_IMAGE: Final = "reference_image"
 CONF_SLOT_EXACT_SIZE: Final = "exact_size"
 CONF_SLOT_FIT: Final = "fit"
+CONF_SLOT_FORMAT: Final = "output_format"
+CONF_SLOT_COLOR_MODE: Final = "color_mode"
 
 # ---------------------------------------------------------------------------
 # Retention
@@ -96,6 +98,8 @@ DEFAULT_MODEL: Final = "zimage"
 DEFAULT_QUALITY: Final = "medium"
 DEFAULT_EXACT_SIZE: Final = True
 DEFAULT_FIT: Final = "cover"
+DEFAULT_FORMAT: Final = "auto"
+DEFAULT_COLOR_MODE: Final = "color"
 
 DEFAULT_SLOT_FILENAMES: Final = ["image_1.jpg", "image_2.jpg"]
 

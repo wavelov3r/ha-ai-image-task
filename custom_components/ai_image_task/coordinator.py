@@ -29,10 +29,12 @@ from .const import (
     CONF_PROVIDER,
     CONF_RETENTION_MODE,
     CONF_RETRIES,
+    CONF_SLOT_COLOR_MODE,
     CONF_SLOT_ENABLED,
     CONF_SLOT_EXACT_SIZE,
     CONF_SLOT_FILENAME,
     CONF_SLOT_FIT,
+    CONF_SLOT_FORMAT,
     CONF_SLOT_HEIGHT,
     CONF_SLOT_MODEL,
     CONF_SLOT_NAME,
@@ -44,8 +46,10 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_COLOR_MODE,
     DEFAULT_EXACT_SIZE,
     DEFAULT_FIT,
+    DEFAULT_FORMAT,
     DEFAULT_GENERATE_ON_START,
     DEFAULT_HEIGHT,
     DEFAULT_HISTORY_SUBDIR,
@@ -87,6 +91,8 @@ _CORE_SLOT_KEYS = {
     CONF_SLOT_SEED,
     CONF_SLOT_EXACT_SIZE,
     CONF_SLOT_FIT,
+    CONF_SLOT_FORMAT,
+    CONF_SLOT_COLOR_MODE,
 }
 
 
@@ -317,22 +323,40 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
 
         target_w = int(slot.config.get(CONF_SLOT_WIDTH) or DEFAULT_WIDTH)
         target_h = int(slot.config.get(CONF_SLOT_HEIGHT) or DEFAULT_HEIGHT)
-        resized = False
-        if bool(slot.config.get(CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE)) and (
-            result.width != target_w or result.height != target_h
-        ):
-            new_bytes, new_type = await self.hass.async_add_executor_job(
-                image_utils.fit_image,
-                result.content,
-                target_w,
-                target_h,
-                str(slot.config.get(CONF_SLOT_FIT) or DEFAULT_FIT),
+        exact_size = bool(slot.config.get(CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE))
+        output_format = str(slot.config.get(CONF_SLOT_FORMAT) or DEFAULT_FORMAT)
+        color_mode = str(slot.config.get(CONF_SLOT_COLOR_MODE) or DEFAULT_COLOR_MODE)
+
+        target_format = image_utils.resolve_target_format(
+            output_format, slot.filename, result.content
+        )
+        original_size = len(result.content)
+        processed_bytes, processed_type = await self.hass.async_add_executor_job(
+            image_utils.process_image,
+            result.content,
+            target_w,
+            target_h,
+            str(slot.config.get(CONF_SLOT_FIT) or DEFAULT_FIT),
+            exact_size,
+            target_format,
+            color_mode,
+        )
+        if processed_type:
+            result.content = processed_bytes
+            result.content_type = processed_type
+        processed = len(result.content) != original_size
+
+        actual_format = image_utils.detect_format(result.content)
+        expected_format = image_utils.format_from_filename(slot.filename)
+        if expected_format and actual_format and expected_format != actual_format:
+            _LOGGER.warning(
+                "%s: the file is named '.%s' but contains %s data. "
+                "Install Pillow or set the output format explicitly, otherwise "
+                "consumers such as ESPHome online_image will reject it",
+                slot.name,
+                expected_format,
+                actual_format.upper(),
             )
-            if new_bytes is not result.content:
-                resized = len(new_bytes) != len(result.content)
-                result.content = new_bytes
-                if new_type:
-                    result.content_type = new_type
 
         metadata = None
         if bool(self._opt(CONF_WRITE_METADATA, DEFAULT_WRITE_METADATA)):
@@ -349,7 +373,9 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
                 "height": target_h,
                 "requested_width": result.width,
                 "requested_height": result.height,
-                "resized": resized,
+                "resized": processed,
+                "format": image_utils.detect_format(result.content),
+                "color_mode": color_mode,
                 "url": result.url,
             }
 

@@ -18,7 +18,7 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import storage
-from .image_utils import FIT_MODES
+from .image_utils import COLOR_MODES, FIT_MODES, OUTPUT_FORMATS
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
@@ -33,10 +33,12 @@ from .const import (
     CONF_PROVIDER,
     CONF_RETENTION_MODE,
     CONF_RETRIES,
+    CONF_SLOT_COLOR_MODE,
     CONF_SLOT_ENABLED,
     CONF_SLOT_EXACT_SIZE,
     CONF_SLOT_FILENAME,
     CONF_SLOT_FIT,
+    CONF_SLOT_FORMAT,
     CONF_SLOT_HEIGHT,
     CONF_SLOT_MODEL,
     CONF_SLOT_NAME,
@@ -51,8 +53,10 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_COLOR_MODE,
     DEFAULT_EXACT_SIZE,
     DEFAULT_FIT,
+    DEFAULT_FORMAT,
     DEFAULT_GENERATE_ON_START,
     DEFAULT_HEIGHT,
     DEFAULT_HISTORY_SUBDIR,
@@ -300,6 +304,30 @@ def slot_schema(
         selector.SelectSelectorConfig(
             options=FIT_MODES,
             translation_key="fit",
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+    fields[
+        vol.Required(
+            CONF_SLOT_FORMAT, default=_get(defaults, CONF_SLOT_FORMAT, DEFAULT_FORMAT)
+        )
+    ] = selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=OUTPUT_FORMATS,
+            translation_key="output_format",
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+    fields[
+        vol.Required(
+            CONF_SLOT_COLOR_MODE,
+            default=_get(defaults, CONF_SLOT_COLOR_MODE, DEFAULT_COLOR_MODE),
+        )
+    ] = selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=COLOR_MODES,
+            translation_key="color_mode",
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     )
