@@ -4,7 +4,7 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 
-Custom integration for Home Assistant that generates **up to 2 AI images** at regular intervals and saves them to disk with a stable filename, designed for e-ink frames, dashboards, smart refrigerators, and similar use cases.
+Custom integration for Home Assistant that generates **up to 2 AI images** (per "device") at regular intervals and saves them to disk with a stable filename, designed for e-ink frames, dashboards, smart refrigerators, and similar use cases.
 
 The default provider is **[Pollinations.ai](https://pollinations.ai)**, available for free and without an account. The architecture is provider-based: adding others requires only a single Python class.
 
