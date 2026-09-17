@@ -1,6 +1,8 @@
-# AI Image Task
+# <img src="custom_components/ai_image_task/brand/icon.png" alt="AI Image Task" width="100"> AI Image Task
 
-[![hacs][hacs-badge]][hacs-url]
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange?style=flat-square&logo=homeassistant&logoColor=white)](https://github.com/hacs/integration)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 
 Custom integration for Home Assistant that generates **up to 2 AI images** at regular intervals and saves them to disk with a stable filename, designed for e-ink frames, dashboards, smart refrigerators, and similar use cases.
 
@@ -129,3 +131,8 @@ automation:
             A minimal illustration of {{ states('weather.home') }} weather,
             {{ now().strftime('%B') }}, flat colors, high contrast, no text
           generate: true
+
+<!-- Badges -->
+
+[hacs-url]: https://github.com/hacs/integration
+[hacs-badge]: https://img.shields.io/badge/hacs-default-orange.svg?style=flat-square
