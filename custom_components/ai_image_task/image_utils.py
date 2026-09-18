@@ -37,10 +37,43 @@ COLOR_GRAYSCALE = "grayscale"
 COLOR_BW = "bw"
 COLOR_MODES = [COLOR_RGB, COLOR_GRAYSCALE, COLOR_BW]
 
+MIN_BW_LEVELS = 2
+MAX_BW_LEVELS = 8
+DEFAULT_BW_LEVELS = 2
+
 _CONTENT_TYPES = {"png": "image/png", "jpeg": "image/jpeg"}
 _EXTENSIONS = {"png": ".png", "jpeg": ".jpg"}
 
 _PIL_WARNED = False
+
+
+def _dither_to_levels(img, levels: int):
+    """Error-diffusion (Floyd-Steinberg) quantisation to ``levels`` evenly
+    spaced gray shades.
+
+    ``Image.convert("1")`` only ever produces 2 levels; e-ink panels with a
+    real gray scale (3/4/16 levels) look banded/streaky if the 256-shade
+    grayscale image is sent as-is and thresholded on the device instead.
+    Building an explicit palette with exactly ``levels`` evenly spaced grays
+    and letting Pillow dither onto it keeps the classic Floyd-Steinberg error
+    diffusion while matching the panel's real capabilities.
+    """
+    from PIL import Image
+
+    levels = max(MIN_BW_LEVELS, min(int(levels), MAX_BW_LEVELS))
+    shades = [round(i * 255 / (levels - 1)) for i in range(levels)]
+
+    palette_img = Image.new("P", (1, 1))
+    palette = []
+    for shade in shades:
+        palette.extend([shade, shade, shade])
+    palette.extend([0, 0, 0] * (256 - len(shades)))
+    palette_img.putpalette(palette)
+
+    quantized = img.convert("L").convert("RGB").quantize(
+        palette=palette_img, dither=Image.Dither.FLOYDSTEINBERG
+    )
+    return quantized.convert("L")
 
 
 def pillow_available() -> bool:
@@ -111,6 +144,7 @@ def process_image(
     color_mode: str = COLOR_RGB,
     pad_color: str = "#ffffff",
     jpeg_quality: int = 92,
+    bw_levels: int = DEFAULT_BW_LEVELS,
 ) -> tuple[bytes, str]:
     """Resize and/or re-encode ``data``.
 
@@ -181,11 +215,12 @@ def process_image(
             if color_mode == COLOR_GRAYSCALE:
                 out = out.convert("L")
             elif color_mode == COLOR_BW:
-                # Floyd-Steinberg dithering: ideal for 1-bit e-ink panels.
-                # The result is stored as 8-bit grayscale (pure black/white
-                # pixels) because some embedded decoders, ESPHome's included,
-                # are happier with 8-bit samples than with 1-bit ones.
-                out = out.convert("L").convert("1").convert("L")
+                # Error-diffusion (Floyd-Steinberg) dithering to the panel's
+                # real number of gray levels, done *after* the resize so the
+                # dither pattern matches the final pixel grid (dithering
+                # before resizing gets blurred/re-sampled by LANCZOS and
+                # turns into visible streaks/banding on e-ink panels).
+                out = _dither_to_levels(out, bw_levels)
 
             buffer = BytesIO()
             if fmt == "png":

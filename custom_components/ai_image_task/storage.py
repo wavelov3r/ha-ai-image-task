@@ -64,10 +64,16 @@ def check_directory(path: str) -> None:
     os.remove(probe)
 
 
-def _history_dir(output_dir: str, history_subdir: str | None) -> str:
-    if history_subdir:
-        return os.path.join(output_dir, history_subdir)
-    return output_dir
+def _history_dir(output_dir: str, history_subdir: str | None, filename: str) -> str:
+    """Directory holding the archived copies of ``filename``.
+
+    Each slot gets its own subfolder (named after its file stem) inside the
+    history subdir, so the two images never mix their archived versions in
+    the same folder.
+    """
+    stem = os.path.splitext(filename)[0]
+    base = os.path.join(output_dir, history_subdir) if history_subdir else output_dir
+    return os.path.join(base, stem)
 
 
 def _archive_name(filename: str, when: datetime) -> str:
@@ -99,7 +105,7 @@ def prune_history(
     keep_days: int,
 ) -> int:
     """Delete archived copies according to the retention policy."""
-    history_dir = _history_dir(output_dir, history_subdir)
+    history_dir = _history_dir(output_dir, history_subdir, filename)
     files = _history_files(history_dir, filename)
     removed = 0
 
@@ -145,7 +151,7 @@ def save_image(
     archived: str | None = None
 
     if retention_mode != RETENTION_OVERWRITE and os.path.exists(target):
-        history_dir = _history_dir(output_dir, history_subdir)
+        history_dir = _history_dir(output_dir, history_subdir, filename)
         ensure_directory(history_dir)
         stamp = datetime.fromtimestamp(os.path.getmtime(target))
         archived = os.path.join(history_dir, _archive_name(filename, stamp))
@@ -154,8 +160,11 @@ def save_image(
             stem, ext = os.path.splitext(_archive_name(filename, stamp))
             archived = os.path.join(history_dir, f"{stem}_{counter}{ext}")
             counter += 1
+        old_meta = os.path.splitext(target)[0] + ".json"
         try:
             shutil.move(target, archived)
+            if os.path.exists(old_meta):
+                shutil.move(old_meta, os.path.splitext(archived)[0] + ".json")
         except OSError as err:  # pragma: no cover - defensive
             _LOGGER.warning("Cannot archive %s: %s", target, err)
             archived = None
@@ -183,7 +192,7 @@ def save_image(
         output_dir, filename, history_subdir, retention_mode, keep_count, keep_days
     )
     history_count = len(
-        _history_files(_history_dir(output_dir, history_subdir), filename)
+        _history_files(_history_dir(output_dir, history_subdir, filename), filename)
     )
     return SaveResult(
         path=target, archived_path=archived, history_count=history_count, pruned=pruned
@@ -195,7 +204,7 @@ def clear_history(
 ) -> int:
     """Delete every archived copy of ``filename``. Returns how many were removed."""
     filename = sanitize_filename(filename)
-    history_dir = _history_dir(output_dir, history_subdir)
+    history_dir = _history_dir(output_dir, history_subdir, filename)
     removed = 0
     for path in _history_files(history_dir, filename):
         try:
@@ -208,8 +217,9 @@ def clear_history(
 
 def count_history(output_dir: str, filename: str, history_subdir: str | None) -> int:
     """Number of archived copies currently on disk."""
+    filename = sanitize_filename(filename)
     return len(
-        _history_files(_history_dir(output_dir, history_subdir), sanitize_filename(filename))
+        _history_files(_history_dir(output_dir, history_subdir, filename), filename)
     )
 
 

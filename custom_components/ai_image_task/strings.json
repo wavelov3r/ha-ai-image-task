@@ -61,7 +61,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "filename": "The current image always keeps this name, so dashboards can use a stable URL.",
@@ -76,7 +77,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       },
       "slot_2": {
@@ -102,7 +104,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -110,7 +113,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       }
     },
@@ -176,7 +180,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -184,7 +189,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       },
       "slot_2": {
@@ -209,7 +215,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -217,7 +224,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       }
     },

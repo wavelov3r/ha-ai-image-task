@@ -29,6 +29,7 @@ from .const import (
     CONF_PROVIDER,
     CONF_RETENTION_MODE,
     CONF_RETRIES,
+    CONF_SLOT_BW_LEVELS,
     CONF_SLOT_COLOR_MODE,
     CONF_SLOT_ENABLED,
     CONF_SLOT_EXACT_SIZE,
@@ -46,6 +47,7 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_BW_LEVELS,
     DEFAULT_COLOR_MODE,
     DEFAULT_EXACT_SIZE,
     DEFAULT_FIT,
@@ -215,6 +217,16 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
                 slot.last_error = old.last_error
                 slot.history_count = old.history_count
                 slot.image_data = old.image_data
+                # The prompt/negative prompt can be live-edited from the
+                # dashboard (text entities, set_prompt service) without ever
+                # being written back to the config entry. If the persisted
+                # value in the entry did not actually change, keep the
+                # in-memory edit instead of reverting to the original
+                # prompt saved when the integration was first configured.
+                if raw.get(CONF_SLOT_PROMPT) == old.config.get(CONF_SLOT_PROMPT):
+                    slot.prompt = old.prompt
+                if raw.get(CONF_SLOT_NEGATIVE) == old.config.get(CONF_SLOT_NEGATIVE):
+                    slot.negative_prompt = old.negative_prompt
             slots.append(slot)
         self.slots = slots
 
@@ -326,6 +338,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
         exact_size = bool(slot.config.get(CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE))
         output_format = str(slot.config.get(CONF_SLOT_FORMAT) or DEFAULT_FORMAT)
         color_mode = str(slot.config.get(CONF_SLOT_COLOR_MODE) or DEFAULT_COLOR_MODE)
+        bw_levels = int(slot.config.get(CONF_SLOT_BW_LEVELS) or DEFAULT_BW_LEVELS)
 
         target_format = image_utils.resolve_target_format(
             output_format, slot.filename, result.content
@@ -340,6 +353,9 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             exact_size,
             target_format,
             color_mode,
+            "#ffffff",
+            92,
+            bw_levels,
         )
         if processed_type:
             result.content = processed_bytes
@@ -376,6 +392,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
                 "resized": processed,
                 "format": image_utils.detect_format(result.content),
                 "color_mode": color_mode,
+                "bw_levels": bw_levels if color_mode == image_utils.COLOR_BW else None,
                 "url": result.url,
             }
 

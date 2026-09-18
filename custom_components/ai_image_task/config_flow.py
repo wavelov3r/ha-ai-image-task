@@ -33,6 +33,7 @@ from .const import (
     CONF_PROVIDER,
     CONF_RETENTION_MODE,
     CONF_RETRIES,
+    CONF_SLOT_BW_LEVELS,
     CONF_SLOT_COLOR_MODE,
     CONF_SLOT_ENABLED,
     CONF_SLOT_EXACT_SIZE,
@@ -53,6 +54,7 @@ from .const import (
     CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
+    DEFAULT_BW_LEVELS,
     DEFAULT_COLOR_MODE,
     DEFAULT_EXACT_SIZE,
     DEFAULT_FIT,
@@ -331,6 +333,16 @@ def slot_schema(
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     )
+    fields[
+        vol.Required(
+            CONF_SLOT_BW_LEVELS,
+            default=_get(defaults, CONF_SLOT_BW_LEVELS, DEFAULT_BW_LEVELS),
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=2, max=8, step=1, mode=selector.NumberSelectorMode.BOX
+        )
+    )
 
     if "quality" in extra:
         fields[
@@ -383,7 +395,7 @@ def normalise_general(data: dict[str, Any]) -> dict[str, Any]:
 
 def normalise_slot(data: dict[str, Any]) -> dict[str, Any]:
     out = dict(data)
-    for key in (CONF_SLOT_WIDTH, CONF_SLOT_HEIGHT, CONF_SLOT_SEED):
+    for key in (CONF_SLOT_WIDTH, CONF_SLOT_HEIGHT, CONF_SLOT_SEED, CONF_SLOT_BW_LEVELS):
         if key in out and out[key] is not None:
             out[key] = int(float(out[key]))
     if out.get(CONF_SLOT_FILENAME):
