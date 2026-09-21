@@ -390,6 +390,11 @@ def normalise_general(data: dict[str, Any]) -> dict[str, Any]:
     ):
         if key in out and out[key] is not None:
             out[key] = int(float(out[key]))
+    # Optional text fields are omitted from user_input entirely when the user
+    # clears them in the UI; default them to "" so a later dict.update() on
+    # the stored options actually clears the old value instead of keeping it.
+    for key in (CONF_BASE_URL, CONF_API_KEY):
+        out.setdefault(key, "")
     return out
 
 
