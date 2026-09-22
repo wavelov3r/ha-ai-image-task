@@ -222,6 +222,12 @@ def process_image(
                 # turns into visible streaks/banding on e-ink panels).
                 out = _dither_to_levels(out, bw_levels)
 
+            if color_mode != COLOR_RGB:
+                # Keep the display-facing image in the RGB layout used by the
+                # color path. Some embedded PNG decoders misread one-channel
+                # grayscale data as packed RGB pixels, causing row artifacts.
+                out = out.convert("RGB")
+
             buffer = BytesIO()
             if fmt == "png":
                 # Non-interlaced 8-bit PNG: what ESPHome's decoder expects.
