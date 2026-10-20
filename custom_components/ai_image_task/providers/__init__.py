@@ -12,11 +12,13 @@ from .base import (  # noqa: F401
     ProviderError,
     ProviderRateLimit,
 )
+from .cloudflare_workers_ai import CloudflareWorkersAIProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .pollinations import PollinationsProvider
 
 PROVIDERS: dict[str, type[ImageProvider]] = {
     PollinationsProvider.slug: PollinationsProvider,
+    CloudflareWorkersAIProvider.slug: CloudflareWorkersAIProvider,
     OpenAICompatibleProvider.slug: OpenAICompatibleProvider,
 }
 
@@ -34,13 +36,18 @@ def build_provider(
     session: ClientSession,
     base_url: str | None = None,
     api_key: str | None = None,
+    account_id: str | None = None,
 ) -> ImageProvider:
     """Instantiate a provider."""
-    return get_provider_class(slug)(session, base_url=base_url, api_key=api_key)
+    return get_provider_class(slug)(
+        session, base_url=base_url, api_key=api_key, account_id=account_id
+    )
 
 
-def provider_options() -> list[dict[str, str]]:
+def provider_options(free_only: bool = False) -> list[dict[str, str]]:
     """Selector options for the config flow."""
     return [
-        {"value": slug, "label": cls.title} for slug, cls in PROVIDERS.items()
+        {"value": slug, "label": cls.title}
+        for slug, cls in PROVIDERS.items()
+        if not free_only or cls.is_free
     ]

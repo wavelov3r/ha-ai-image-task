@@ -66,6 +66,8 @@ class OpenAICompatibleProvider(ImageProvider):
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
+        if self.authorization_header:
+            headers["Authorization"] = self.authorization_header
         timeout = aiohttp.ClientTimeout(total=request.timeout)
         try:
             async with self._session.post(

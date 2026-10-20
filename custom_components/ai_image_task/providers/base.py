@@ -73,6 +73,7 @@ class ImageResult:
     #: asked by the user when the backend has minimum-size constraints)
     width: int | None = None
     height: int | None = None
+    provider: str | None = None
 
     @property
     def extension(self) -> str:
@@ -95,6 +96,10 @@ class ImageProvider(ABC):
     default_base_url: str = ""
     #: whether an API key is mandatory
     requires_api_key: bool = False
+    #: whether a Cloudflare account id (or equivalent) is mandatory
+    requires_account_id: bool = False
+    #: whether the provider has a free usage tier suitable for fallback
+    is_free: bool = False
     #: models offered in the UI (free text is still allowed)
     models: tuple[str, ...] = ()
     #: optional per-slot settings this provider understands, with a short
@@ -106,14 +111,23 @@ class ImageProvider(ABC):
         session: ClientSession,
         base_url: str | None = None,
         api_key: str | None = None,
+        account_id: str | None = None,
     ) -> None:
         self._session = session
         self._base_url = (base_url or self.default_base_url).rstrip("/")
         self._api_key = api_key or None
+        self._account_id = account_id or None
 
     @property
     def base_url(self) -> str:
         return self._base_url
+
+    @property
+    def authorization_header(self) -> str | None:
+        """Return a bearer authorization value when a token is configured."""
+        if not self._api_key:
+            return None
+        return " ".join(("Bearer", self._api_key))
 
     @abstractmethod
     async def async_generate(self, request: ImageRequest) -> ImageResult:
@@ -121,4 +135,7 @@ class ImageProvider(ABC):
 
     async def async_validate(self) -> None:
         """Optional lightweight connectivity/credential check."""
-        return None
+        if self.requires_api_key and not self._api_key:
+            raise ProviderAuthError("This provider requires an API token")
+        if self.requires_account_id and not self._account_id:
+            raise ProviderAuthError("This provider requires an account ID")

@@ -126,6 +126,7 @@ class PollinationsProvider(ImageProvider):
     title = "Pollinations.ai (free)"
     default_base_url = GEN_BASE
     requires_api_key = False
+    is_free = True
     models = (
         "zimage",
         "flux",
@@ -227,6 +228,8 @@ class PollinationsProvider(ImageProvider):
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
+        if self.authorization_header:
+            headers["Authorization"] = self.authorization_header
         timeout = aiohttp.ClientTimeout(total=request.timeout)
         try:
             async with self._session.get(
@@ -302,6 +305,8 @@ class PollinationsProvider(ImageProvider):
         headers = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+        if self.authorization_header:
+            headers["Authorization"] = self.authorization_header
         try:
             async with self._session.get(
                 url, headers=headers, timeout=aiohttp.ClientTimeout(total=20)
