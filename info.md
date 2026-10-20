@@ -66,7 +66,7 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 |---|---|
 | Attiva | Disattiva lo slot 2 se ti serve una sola immagine. |
 | Nome file | Es. `frigo_left.jpg`. Il file corrente mantiene sempre questo nome. |
-| Prompt / Prompt negativo | Vedi nota sotto sui prompt negativi. |
+| Prompt / Prompt negativo | Si impostano dalle entità `text` dello slot o con il servizio `ai_image_task.set_prompt`. |
 | Modello | `zimage` (default), `flux`, `turbo`, `kontext`, `klein`, `nanobanana`, `seedream`, `qwen-image`, `wan-image`, `gptimage`, `p-image`. Si può digitare un modello non in elenco. |
 | Larghezza / Altezza | Misura finale in pixel (es. 800×480 per molti e-ink). |
 | Ridimensiona alla misura esatta | I backend rifiutano lati sotto i 512 px: l'integrazione chiede una misura più grande con lo stesso rapporto e poi riporta il file alla misura esatta. |
@@ -203,7 +203,7 @@ Consigli per pannelli e-ink:
 
 - Uso anonimo di Pollinations: circa **1 richiesta ogni 15 secondi**. Tieni l'attesa tra le due immagini ≥ 15 s e non impostare intervalli troppo aggressivi.
 - Il servizio è gratuito e "best effort": i fallimenti occasionali sono normali, per questo esistono i retry e l'ultima immagine valida resta sul disco.
-- Le entità `text` sono limitate a 255 caratteri da Home Assistant; per prompt lunghi usa le opzioni dell'integrazione o `set_prompt`.
+- Le entità `text` sono limitate a 255 caratteri da Home Assistant; per prompt lunghi usa il servizio `ai_image_task.set_prompt`.
 - Qualsiasi cosa dentro `/config/www` è servita da Home Assistant **senza autenticazione**: non generare immagini che contengano dati sensibili.
 
 ## Aggiungere un nuovo provider
