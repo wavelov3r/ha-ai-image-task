@@ -322,14 +322,6 @@ def slot_schema(
                 defaults, CONF_SLOT_FILENAME, DEFAULT_SLOT_FILENAMES[index]
             ),
         ): selector.TextSelector(),
-        vol.Optional(
-            CONF_SLOT_PROMPT,
-            description={"suggested_value": defaults.get(CONF_SLOT_PROMPT, "")},
-        ): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
-        vol.Optional(
-            CONF_SLOT_NEGATIVE,
-            description={"suggested_value": defaults.get(CONF_SLOT_NEGATIVE, "")},
-        ): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
         vol.Required(
             CONF_SLOT_MODEL, default=model_default
         ): selector.SelectSelector(
@@ -674,7 +666,11 @@ class AiImageTaskOptionsFlow(OptionsFlow):
         self, index: int, step_id: str, user_input: dict[str, Any] | None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            self._slots[index] = normalise_slot(user_input)
+            slot = normalise_slot(user_input)
+            for key in (CONF_SLOT_PROMPT, CONF_SLOT_NEGATIVE):
+                if key not in slot and key in self._slots[index]:
+                    slot[key] = self._slots[index][key]
+            self._slots[index] = slot
             return self._save()
         return self.async_show_form(
             step_id=step_id,
