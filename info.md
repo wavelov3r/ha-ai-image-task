@@ -4,7 +4,7 @@
 
 Custom integration per Home Assistant che genera **fino a 2 immagini AI** a intervalli regolari e le salva su disco con un nome stabile, pensata per cornici e-ink, dashboard, frigoriferi smart e simili.
 
-Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utilizzabile gratuitamente e senza account. L'architettura è a provider: aggiungerne altri richiede una sola classe Python.
+Il provider preferito è **[Pollinations.ai](https://pollinations.ai)**, utilizzabile senza chiave API. Sono disponibili anche Cloudflare Workers AI, Google Gemini API / AI Studio, Hugging Face Inference Providers ed endpoint OpenAI-compatible. In caso di errore, vengono provati automaticamente gli altri provider configurati.
 
 ---
 
@@ -21,6 +21,7 @@ Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utili
 - Scrittura atomica (`.tmp` + `os.replace`): nessun file troncato letto a metà da un e-ink.
 - Sfasamento configurabile tra le due richieste, per rispettare il rate limit anonimo di Pollinations (≈1 richiesta ogni 15 s).
 - Retry automatici con backoff su errori e `429`.
+- Fallback automatico tra i provider configurati, dopo i tentativi del provider preferito.
 - Entità per slot: `image`, `sensor` (stato / ultima generazione / archivi), `button` (genera ora, svuota storico), `switch` (aggiornamento automatico), `text` (prompt e prompt negativo modificabili dalla dashboard).
 - Servizi: `ai_image_task.generate`, `ai_image_task.set_prompt`, `ai_image_task.clear_history`.
 - Interfaccia tradotta in italiano e inglese.
@@ -42,9 +43,13 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 
 | Campo | Descrizione |
 |---|---|
-| Servizio | `Pollinations.ai (free)` oppure `OpenAI-compatible endpoint`. |
-| URL base API | Vuoto = `https://gen.pollinations.ai`. Per l'endpoint legacy: `https://image.pollinations.ai`. |
-| Chiave API | Facoltativa. Da [enter.pollinations.ai](https://enter.pollinations.ai); alza i limiti e sblocca i modelli premium. |
+| Provider preferito | Viene provato per primo; se fallisce, vengono provati i provider configurati con credenziali valide. |
+| Credenziali provider | Account/utente e API key salvati separatamente per ciascun servizio. Le credenziali mancanti escludono il provider dal fallback. Pollinations senza chiave viene usato solo se preferito. |
+| Google Gemini | API key AI Studio obbligatoria; disponibilità gratuita dipende da modello e piano. |
+| Hugging Face | Token Inference Providers obbligatorio; gli account gratuiti non hanno crediti inference inclusi. |
+| Cloudflare Workers AI | Token API e ID account obbligatori; quota gratuita limitata. |
+| OpenAI-compatible | URL base obbligatorio, API key secondo l'endpoint. I costi dipendono dal servizio. |
+| Rimuovi credenziali salvate | Seleziona il checkbox del provider per cancellare le credenziali memorizzate. |
 | Intervallo + unità | Ogni quanto rigenerare (minuti oppure ore). |
 | Cartella di destinazione | Default `/config/www/einkfrigo/images`. Viene creata se non esiste. |
 | Politica di conservazione | `Sovrascrivi`, `Conserva le ultime N`, `Conserva per N giorni`. |
@@ -75,6 +80,15 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | URL immagine di riferimento | Per i modelli di editing/img2img (`kontext`, `nanobanana`, `seedream`, `klein`). |
 
 > **Nota sui prompt negativi.** Le API HTTP di Pollinations non espongono un parametro `negative_prompt`. L'integrazione unisce le parole negative al prompt usando il template configurabile. Funziona bene con i modelli che seguono le istruzioni (`zimage`, `gptimage`) e meno con i modelli puramente diffusion.
+
+### Servizi gratuiti e compatibilità
+
+- **Pollinations.ai** non richiede account o chiave API; il servizio anonimo applica limiti di frequenza.
+- **Cloudflare Workers AI** richiede un token API e l'ID account, ma include 10.000 Neurons/giorno gratuiti per account. [Prezzi](https://developers.cloudflare.com/workers-ai/platform/pricing/) · [FLUX.1 schnell](https://developers.cloudflare.com/workers-ai/models/flux-1-schnell/).
+- **Google Gemini API / AI Studio** richiede una chiave API; la disponibilità gratuita dipende da modello e piano. [Guida immagini](https://ai.google.dev/gemini-api/docs/image-generation) · [Prezzi](https://ai.google.dev/gemini-api/docs/pricing).
+- **Hugging Face Inference Providers** richiede un token con permesso inference; gli account gratuiti non hanno crediti mensili di inference inclusi. [API text-to-image](https://huggingface.co/docs/inference-providers/tasks/text-to-image) · [Prezzi](https://huggingface.co/docs/inference-providers/pricing).
+- Gemini, Hugging Face e gli endpoint OpenAI-compatible possono essere usati come fallback se configurati; possono comportare costi.
+- ChatGPT/OpenAI e Midjourney non sono inclusi come servizi gratuiti garantiti: ChatGPT Plus non fornisce crediti API OpenAI e Midjourney non offre una API pubblica gratuita supportata.
 
 Tutte le impostazioni sono modificabili in seguito da **Configura** sull'integrazione, con un menu a tre voci (Generale / Immagine 1 / Immagine 2).
 

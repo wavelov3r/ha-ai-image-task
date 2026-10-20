@@ -4,7 +4,7 @@
 
 Custom integration per Home Assistant che genera **fino a 2 immagini AI** a intervalli regolari e le salva su disco con un nome stabile, pensata per cornici e-ink, dashboard, frigoriferi smart e simili.
 
-Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utilizzabile gratuitamente e senza account. L'architettura è a provider: aggiungerne altri richiede una sola classe Python.
+Il provider preferito è **[Pollinations.ai](https://pollinations.ai)**, utilizzabile senza chiave API. Sono disponibili anche Cloudflare Workers AI, Google Gemini API / AI Studio, Hugging Face Inference Providers e endpoint OpenAI-compatible. Se il preferito fallisce, vengono provati automaticamente gli altri provider configurati.
 
 ---
 
@@ -20,7 +20,8 @@ Il provider predefinito è **[Pollinations.ai](https://pollinations.ai)**, utili
   - **Conserva per N giorni** — archivia ed elimina gli archivi più vecchi di N giorni.
 - Scrittura atomica (`.tmp` + `os.replace`): nessun file troncato letto a metà da un e-ink.
 - Sfasamento configurabile tra le due richieste, per rispettare il rate limit anonimo di Pollinations (≈1 richiesta ogni 15 s).
-- Retry automatici con backoff su errori e `429`.
+- Retry automatici con backoff su errori e `429`; fallback automatico tra provider configurati.
+- Provider: Pollinations.ai (nessuna chiave obbligatoria), Cloudflare Workers AI (token e ID account obbligatori, quota giornaliera gratuita), Google Gemini (chiave API) e Hugging Face (token; crediti/uso a pagamento). È disponibile anche un endpoint OpenAI-compatible.
 - Entità per slot: `image`, `sensor` (stato / ultima generazione / archivi), `button` (genera ora, svuota storico), `switch` (aggiornamento automatico), `text` (prompt e prompt negativo modificabili dalla dashboard).
 - Servizi: `ai_image_task.generate`, `ai_image_task.set_prompt`, `ai_image_task.clear_history`.
 - Interfaccia tradotta in italiano e inglese.
@@ -42,9 +43,13 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 
 | Campo | Descrizione |
 |---|---|
-| Servizio | `Pollinations.ai (free)` oppure `OpenAI-compatible endpoint`. |
-| URL base API | Vuoto = `https://gen.pollinations.ai`. Per l'endpoint legacy: `https://image.pollinations.ai`. |
-| Chiave API | Facoltativa. Da [enter.pollinations.ai](https://enter.pollinations.ai); alza i limiti e sblocca i modelli premium. |
+| Provider preferito | Viene provato per primo. Se fallisce, il plugin prova gli altri provider configurati con credenziali valide. |
+| Credenziali provider | Account/utente e API key sono memorizzati separatamente per ogni servizio. Campi mancanti escludono il provider dal fallback. Pollinations senza chiave viene usato solo se preferito. |
+| Google Gemini | API key AI Studio obbligatoria; disponibilità gratuita e limiti dipendono da modello e piano. |
+| Hugging Face | Token Inference Providers obbligatorio; gli account gratuiti non hanno crediti inference inclusi. |
+| Cloudflare Workers AI | API token e ID account obbligatori; quota gratuita giornaliera limitata. |
+| OpenAI-compatible | URL base obbligatorio; l'API key dipende dall'endpoint. I costi dipendono dal servizio. |
+| Rimuovi credenziali salvate | Seleziona il checkbox del provider per cancellare le credenziali memorizzate. |
 | Intervallo + unità | Ogni quanto rigenerare (minuti oppure ore). |
 | Cartella di destinazione | Default `/config/www/einkfrigo/images`. Viene creata se non esiste. |
 | Politica di conservazione | `Sovrascrivi`, `Conserva le ultime N`, `Conserva per N giorni`. |
@@ -62,7 +67,7 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | Attiva | Disattiva lo slot 2 se ti serve una sola immagine. |
 | Nome file | Es. `frigo_left.jpg`. Il file corrente mantiene sempre questo nome. |
 | Prompt / Prompt negativo | Vedi nota sotto sui prompt negativi. |
-| Modello | `zimage` (default), `flux`, `turbo`, `kontext`, `klein`, `nanobanana`, `seedream`, `qwen-image`, `wan-image`, `gptimage`, `p-image`. Si può digitare un modello non in elenco. |
+| Modello | Pollinations: `zimage` (default) e altri modelli del provider. Cloudflare usa FLUX.1 schnell. Gemini propone i modelli image disponibili nell'API Gemini. Hugging Face usa `stabilityai/stable-diffusion-3-medium-diffusers` come default; si possono inserire altri model ID abilitati per il proprio account/provider. |
 | Larghezza / Altezza | Misura finale in pixel (es. 800×480 per molti e-ink). |
 | Ridimensiona alla misura esatta | I backend rifiutano lati sotto i 512 px: l'integrazione chiede una misura più grande con lo stesso rapporto e poi riporta il file alla misura esatta. |
 | Modalità di adattamento | `cover` (ritaglia per riempire), `contain` (bande bianche), `stretch` (deforma). |
@@ -75,7 +80,18 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | Modalità sicura / Rimuovi filigrana / Generazione privata / Migliora il prompt | Flag opzionali del provider. |
 | URL immagine di riferimento | Per i modelli di editing/img2img (`kontext`, `nanobanana`, `seedream`, `klein`). |
 
-> **Nota sui prompt negativi.** Le API HTTP di Pollinations non espongono un parametro `negative_prompt`. L'integrazione unisce le parole negative al prompt usando il template configurabile. Funziona bene con i modelli che seguono le istruzioni (`zimage`, `gptimage`) e meno con i modelli puramente diffusion.
+> **Nota sui prompt negativi.** Pollinations e Gemini ricevono il prompt negativo unito al testo usando il template configurabile. Hugging Face usa il parametro `negative_prompt` dedicato previsto dalla sua API.
+
+### Servizi gratuiti, API e fallback
+
+- **Pollinations.ai**: API HTTP disponibile senza account o chiave; l'uso anonimo è soggetto a limiti e disponibilità del servizio.
+- **Cloudflare Workers AI**: token API e ID account obbligatori; include una quota gratuita di 10.000 Neurons al giorno, condivisa con l'account. [Prezzi](https://developers.cloudflare.com/workers-ai/platform/pricing/) · [FLUX.1 schnell](https://developers.cloudflare.com/workers-ai/models/flux-1-schnell/).
+- **Google Gemini API / AI Studio**: chiave API obbligatoria. La disponibilità gratuita e i limiti dipendono dal modello e dal piano AI Studio; controllare [prezzi](https://ai.google.dev/gemini-api/docs/pricing) e [modelli image](https://ai.google.dev/gemini-api/docs/image-generation). Il provider usa l'API Interactions ufficiale.
+- **Hugging Face Inference Providers**: token Hugging Face con permesso Inference Providers obbligatorio. Per gli account gratuiti non sono inclusi crediti mensili di inference; sono necessari crediti acquistati oppure un piano che li includa. [Prezzi](https://huggingface.co/docs/inference-providers/pricing) · [API text-to-image](https://huggingface.co/docs/inference-providers/tasks/text-to-image).
+- Gemini, Hugging Face e gli endpoint OpenAI-compatible possono essere usati automaticamente come fallback se sono configurati; potrebbero comportare costi.
+- **ChatGPT/OpenAI e Midjourney**: non inclusi come provider gratuiti garantiti. ChatGPT Plus non include crediti API OpenAI e Midjourney non offre una API pubblica gratuita supportata.
+
+Il provider preferito viene provato per primo; per ogni provider sono eseguiti i tentativi configurati prima di passare al successivo. I provider a pagamento configurati possono essere chiamati automaticamente come fallback e comportare costi. Il sensore di stato e i metadati indicano quale provider ha generato l'immagine.
 
 Tutte le impostazioni sono modificabili in seguito da **Configura** sull'integrazione, con un menu a tre voci (Generale / Immagine 1 / Immagine 2).
 
