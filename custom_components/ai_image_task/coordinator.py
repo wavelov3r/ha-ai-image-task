@@ -16,12 +16,6 @@ from homeassistant.util import dt as dt_util
 
 from . import image_utils, storage
 from .const import (
-    CONF_API_KEY,
-    CONF_ACCOUNT_ID,
-    CONF_BASE_URL,
-    CONF_FALLBACK_ACCOUNT_ID,
-    CONF_FALLBACK_API_KEY,
-    CONF_FALLBACK_PROVIDERS,
     CONF_GENERATE_ON_START,
     CONF_HISTORY_SUBDIR,
     CONF_INTERVAL,
@@ -83,10 +77,13 @@ from .const import (
 from .providers import (
     ImageRequest,
     ImageResult,
+    PROVIDERS,
     ProviderError,
     ProviderRateLimit,
     build_provider,
+    configured_provider_slugs,
     get_provider_class,
+    provider_config,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -298,34 +295,9 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
         session = async_get_clientsession(self.hass)
         primary_slug = str(self._opt(CONF_PROVIDER, DEFAULT_PROVIDER))
         provider_configs = [
-            (
-                primary_slug,
-                self.options.get(CONF_BASE_URL) or None,
-                self.options.get(CONF_API_KEY) or None,
-                self.options.get(CONF_ACCOUNT_ID) or None,
-            )
+            (slug, provider_config(slug, self.options))
+            for slug in configured_provider_slugs(self.options, primary_slug)
         ]
-        seen_providers = {primary_slug}
-        for fallback_slug in self.options.get(CONF_FALLBACK_PROVIDERS, []):
-            if fallback_slug in seen_providers:
-                continue
-            fallback_cls = get_provider_class(fallback_slug)
-            if not fallback_cls.is_free:
-                _LOGGER.error("Ignoring non-free fallback provider '%s'", fallback_slug)
-                continue
-            seen_providers.add(fallback_slug)
-            provider_configs.append(
-                (
-                    fallback_slug,
-                    None,
-                    self.options.get(CONF_FALLBACK_API_KEY)
-                    if fallback_cls.requires_api_key
-                    else None,
-                    self.options.get(CONF_FALLBACK_ACCOUNT_ID)
-                    if fallback_cls.requires_account_id
-                    else None,
-                )
-            )
         request = ImageRequest(
             prompt=slot.prompt,
             negative_prompt=slot.negative_prompt,
@@ -341,21 +313,33 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
         )
 
         retries = max(int(self._opt(CONF_RETRIES, DEFAULT_RETRIES)), 0)
+        known_provider_models = {
+            model for provider_cls in PROVIDERS.values() for model in provider_cls.models
+        }
         result: ImageResult | None = None
         used_provider: str | None = None
         last_error: str | None = None
 
-        for slug, base_url, api_key, account_id in provider_configs:
+        for slug, credentials in provider_configs:
             provider = build_provider(
                 slug,
                 session,
-                base_url=base_url,
-                api_key=api_key,
-                account_id=account_id,
+                base_url=credentials["base_url"],
+                api_key=credentials["api_key"],
+                account_id=credentials["account_id"],
             )
             provider_request = request
-            if slug == "pollinations" and str(request.model).startswith("@cf/"):
-                provider_request = replace(request, model=DEFAULT_MODEL)
+            provider_cls = get_provider_class(slug)
+            if (
+                request.model in known_provider_models
+                and request.model not in provider_cls.models
+            ):
+                provider_request = replace(
+                    request,
+                    model=provider_cls.models[0]
+                    if provider_cls.models
+                    else DEFAULT_MODEL,
+                )
             for attempt in range(retries + 1):
                 try:
                     result = await provider.async_generate(provider_request)

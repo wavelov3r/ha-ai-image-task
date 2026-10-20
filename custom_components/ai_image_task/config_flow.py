@@ -90,10 +90,14 @@ from .const import (
     RETENTION_MODES,
 )
 from .providers import (
+    PROVIDERS,
     ProviderAuthError,
     ProviderError,
     build_provider,
+    configured_provider_slugs,
     get_provider_class,
+    provider_config,
+    provider_field_key,
     provider_options,
 )
 
@@ -108,8 +112,36 @@ def _get(data: dict[str, Any], key: str, default: Any) -> Any:
     return default if value is None else value
 
 
+def _provider_defaults(defaults: dict[str, Any]) -> dict[str, Any]:
+    """Expose legacy single-provider credentials in the new per-provider form."""
+    values = dict(defaults)
+    legacy_slug = str(values.get(CONF_PROVIDER, DEFAULT_PROVIDER))
+    if legacy_slug in PROVIDERS:
+        legacy = {
+            "api_key": values.get(CONF_API_KEY),
+            "account": values.get(CONF_ACCOUNT_ID),
+            "base_url": values.get(CONF_BASE_URL),
+        }
+        for field, value in legacy.items():
+            key = provider_field_key(legacy_slug, field)
+            if value and not values.get(key):
+                values[key] = value
+
+    fallback_providers = values.get(CONF_FALLBACK_PROVIDERS) or []
+    if "cloudflare_workers_ai" in fallback_providers:
+        for field, value in (
+            ("api_key", values.get(CONF_FALLBACK_API_KEY)),
+            ("account", values.get(CONF_FALLBACK_ACCOUNT_ID)),
+        ):
+            key = provider_field_key("cloudflare_workers_ai", field)
+            if value and not values.get(key):
+                values[key] = value
+    return values
+
+
 def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Schema:
     """Schema for the global settings."""
+    defaults = _provider_defaults(defaults)
     fields: dict[Any, Any] = {}
     if with_name:
         fields[vol.Required(CONF_NAME, default=_get(defaults, CONF_NAME, DEFAULT_NAME))] = (
@@ -129,47 +161,6 @@ def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Sche
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Optional(
-                CONF_BASE_URL,
-                description={"suggested_value": defaults.get(CONF_BASE_URL, "")},
-            ): selector.TextSelector(),
-            vol.Optional(
-                CONF_API_KEY,
-                description={"suggested_value": defaults.get(CONF_API_KEY, "")},
-            ): selector.TextSelector(
-                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
-            ),
-            vol.Optional(
-                CONF_ACCOUNT_ID,
-                description={"suggested_value": defaults.get(CONF_ACCOUNT_ID, "")},
-            ): selector.TextSelector(),
-            vol.Optional(
-                CONF_FALLBACK_PROVIDERS,
-                default=_get(defaults, CONF_FALLBACK_PROVIDERS, []),
-            ): selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=[
-                        selector.SelectOptionDict(value=o["value"], label=o["label"])
-                        for o in provider_options(free_only=True)
-                    ],
-                    multiple=True,
-                    mode=selector.SelectSelectorMode.LIST,
-                )
-            ),
-            vol.Optional(
-                CONF_FALLBACK_API_KEY,
-                description={
-                    "suggested_value": defaults.get(CONF_FALLBACK_API_KEY, "")
-                },
-            ): selector.TextSelector(
-                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
-            ),
-            vol.Optional(
-                CONF_FALLBACK_ACCOUNT_ID,
-                description={
-                    "suggested_value": defaults.get(CONF_FALLBACK_ACCOUNT_ID, "")
-                },
-            ): selector.TextSelector(),
             vol.Required(
                 CONF_INTERVAL, default=_get(defaults, CONF_INTERVAL, DEFAULT_INTERVAL)
             ): selector.NumberSelector(
@@ -264,6 +255,41 @@ def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Sche
             ): selector.BooleanSelector(),
         }
     )
+    provider_fields: dict[Any, Any] = {}
+    for slug in PROVIDERS:
+        prefix = provider_field_key(slug, "account")
+        provider_fields[
+            vol.Optional(
+                prefix,
+                description={"suggested_value": defaults.get(prefix, "")},
+            )
+        ] = selector.TextSelector()
+
+        api_key = provider_field_key(slug, "api_key")
+        provider_fields[
+            vol.Optional(
+                api_key,
+                description={"suggested_value": defaults.get(api_key, "")},
+            )
+        ] = selector.TextSelector(
+            selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+        )
+
+        if slug in ("pollinations", "openai_compatible"):
+            base_url = provider_field_key(slug, "base_url")
+            provider_fields[
+                vol.Optional(
+                    base_url,
+                    description={"suggested_value": defaults.get(base_url, "")},
+                )
+            ] = selector.TextSelector()
+
+        clear_key = provider_field_key(slug, "clear")
+        provider_fields[
+            vol.Optional(clear_key, default=False)
+        ] = selector.BooleanSelector()
+    field_items = list(fields.items())
+    fields = dict(field_items[:1] + list(provider_fields.items()) + field_items[1:])
     return vol.Schema(fields)
 
 
@@ -274,10 +300,12 @@ def slot_schema(
     provider_cls = get_provider_class(provider_slug)
     extra = provider_cls.extra_options
     model_default = _get(defaults, CONF_SLOT_MODEL, DEFAULT_MODEL)
-    if provider_slug == "cloudflare_workers_ai":
+    if provider_slug in {
+        "cloudflare_workers_ai",
+        "google_gemini",
+        "huggingface",
+    } and model_default not in provider_cls.models:
         model_default = provider_cls.models[0]
-    elif model_default.startswith("@cf/"):
-        model_default = DEFAULT_MODEL
 
     fields: dict[Any, Any] = {
         vol.Required(
@@ -433,15 +461,29 @@ def normalise_general(data: dict[str, Any]) -> dict[str, Any]:
     # Optional text fields are omitted from user_input entirely when the user
     # clears them in the UI; default them to "" so a later dict.update() on
     # the stored options actually clears the old value instead of keeping it.
+    for slug in PROVIDERS:
+        for field in ("account", "api_key"):
+            key = provider_field_key(slug, field)
+            out.setdefault(key, "")
+        for field in ("base_url", "clear"):
+            key = provider_field_key(slug, field)
+            out.setdefault(key, "" if field == "base_url" else False)
+
+        if out.pop(provider_field_key(slug, "clear"), False):
+            out[provider_field_key(slug, "api_key")] = ""
+            out[provider_field_key(slug, "account")] = ""
+            out[provider_field_key(slug, "base_url")] = ""
+
+    # Clear obsolete fields after migrating older entries to per-provider keys.
     for key in (
         CONF_BASE_URL,
         CONF_API_KEY,
         CONF_ACCOUNT_ID,
         CONF_FALLBACK_API_KEY,
         CONF_FALLBACK_ACCOUNT_ID,
+        CONF_FALLBACK_PROVIDERS,
     ):
-        out.setdefault(key, "")
-    out.setdefault(CONF_FALLBACK_PROVIDERS, [])
+        out.pop(key, None)
     return out
 
 
@@ -464,53 +506,28 @@ async def async_validate_general(hass, data: dict[str, Any]) -> dict[str, str]:
         _LOGGER.error("Output directory problem: %s", err)
         errors[CONF_OUTPUT_DIR] = "invalid_directory"
 
+    primary_slug = data[CONF_PROVIDER]
+    primary_config = provider_config(primary_slug, data)
+    if (
+        primary_slug == "openai_compatible"
+        and not primary_config["base_url"]
+    ):
+        errors[provider_field_key(primary_slug, "base_url")] = "invalid_provider_config"
     provider = build_provider(
-        data[CONF_PROVIDER],
+        primary_slug,
         async_get_clientsession(hass),
-        base_url=data.get(CONF_BASE_URL) or None,
-        api_key=data.get(CONF_API_KEY) or None,
-        account_id=data.get(CONF_ACCOUNT_ID) or None,
+        base_url=primary_config["base_url"],
+        api_key=primary_config["api_key"],
+        account_id=primary_config["account_id"],
     )
     try:
         await provider.async_validate()
     except ProviderAuthError as err:
-        field = CONF_ACCOUNT_ID if "account ID" in str(err) else CONF_API_KEY
+        field_name = "account" if "account ID" in str(err) else "api_key"
+        field = provider_field_key(primary_slug, field_name)
         errors[field] = "invalid_auth"
     except ProviderError:
         errors["base"] = "cannot_connect"
-
-    for fallback_slug in data.get(CONF_FALLBACK_PROVIDERS, []):
-        if fallback_slug == data[CONF_PROVIDER]:
-            continue
-        fallback_cls = get_provider_class(fallback_slug)
-        if not fallback_cls.is_free:
-            errors[CONF_FALLBACK_PROVIDERS] = "invalid_fallback"
-            continue
-        fallback_provider = build_provider(
-            fallback_slug,
-            async_get_clientsession(hass),
-            api_key=(
-                data.get(CONF_FALLBACK_API_KEY)
-                if fallback_cls.requires_api_key
-                else None
-            ),
-            account_id=(
-                data.get(CONF_FALLBACK_ACCOUNT_ID)
-                if fallback_cls.requires_account_id
-                else None
-            ),
-        )
-        try:
-            await fallback_provider.async_validate()
-        except ProviderAuthError as err:
-            field = (
-                CONF_FALLBACK_ACCOUNT_ID
-                if "account ID" in str(err)
-                else CONF_FALLBACK_API_KEY
-            )
-            errors[field] = "invalid_auth"
-        except ProviderError:
-            errors["base"] = "cannot_connect"
     return errors
 
 
@@ -593,6 +610,7 @@ class AiImageTaskOptionsFlow(OptionsFlow):
             **config_entry.data,
             **config_entry.options,
         }
+        self._options = _provider_defaults(self._options)
         slots = list(self._options.get(CONF_SLOTS) or [])
         while len(slots) < MAX_SLOTS:
             slots.append({})
@@ -611,9 +629,29 @@ class AiImageTaskOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         if user_input is not None:
             data = normalise_general(user_input)
+            for slug in PROVIDERS:
+                clear_key = provider_field_key(slug, "clear")
+                if user_input.get(clear_key):
+                    continue
+                for field in ("api_key", "account", "base_url"):
+                    config_key = provider_field_key(slug, field)
+                    if (
+                        config_key not in user_input
+                        and self._options.get(config_key)
+                    ):
+                        data[config_key] = self._options[config_key]
             errors = await async_validate_general(self.hass, data)
             if not errors:
                 self._options.update(data)
+                for key in (
+                    CONF_BASE_URL,
+                    CONF_API_KEY,
+                    CONF_ACCOUNT_ID,
+                    CONF_FALLBACK_API_KEY,
+                    CONF_FALLBACK_ACCOUNT_ID,
+                    CONF_FALLBACK_PROVIDERS,
+                ):
+                    self._options.pop(key, None)
                 return self._save()
         defaults = user_input or self._options
         return self.async_show_form(
