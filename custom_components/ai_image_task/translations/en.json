@@ -7,8 +7,23 @@
         "data": {
           "name": "Name",
           "provider": "Provider",
-          "base_url": "API base URL (optional)",
-          "api_key": "API key (optional)",
+          "provider_pollinations_account": "Pollinations.ai — User/account (optional)",
+          "provider_pollinations_api_key": "Pollinations.ai — API key (optional)",
+          "provider_pollinations_base_url": "Pollinations.ai — Base URL (optional)",
+          "provider_pollinations_clear": "Pollinations.ai — Clear saved credentials",
+          "provider_cloudflare_workers_ai_account": "Cloudflare Workers AI — Account ID",
+          "provider_cloudflare_workers_ai_api_key": "Cloudflare Workers AI — API token",
+          "provider_cloudflare_workers_ai_clear": "Cloudflare Workers AI — Clear saved credentials",
+          "provider_google_gemini_account": "Google Gemini — User/account (optional)",
+          "provider_google_gemini_api_key": "Google Gemini — API key",
+          "provider_google_gemini_clear": "Google Gemini — Clear saved credentials",
+          "provider_huggingface_account": "Hugging Face — User/account (optional)",
+          "provider_huggingface_api_key": "Hugging Face — API token",
+          "provider_huggingface_clear": "Hugging Face — Clear saved credentials",
+          "provider_openai_compatible_account": "OpenAI-compatible — User/account (optional)",
+          "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
+          "provider_openai_compatible_base_url": "OpenAI-compatible — API base URL",
+          "provider_openai_compatible_clear": "OpenAI-compatible — Clear saved credentials",
           "update_interval": "Update interval",
           "update_interval_unit": "Interval unit",
           "output_dir": "Output folder",
@@ -24,9 +39,18 @@
           "generate_on_start": "Generate right after startup / reload"
         },
         "data_description": {
-          "provider": "Pollinations works without an account. The OpenAI-compatible option targets any endpoint exposing /v1/images/generations.",
-          "base_url": "Leave empty for the provider default (https://gen.pollinations.ai). Use https://image.pollinations.ai for the legacy endpoint.",
-          "api_key": "Optional. Raises the rate limits and unlocks premium models.",
+          "provider": "Preferred provider, tried first. If it fails, configured providers with valid credentials are tried in sequence. Paid providers may incur charges.",
+          "provider_pollinations_account": "Informational only; not sent to the API.",
+          "provider_pollinations_api_key": "Optional: without a key, Pollinations is only used when selected as the preferred provider.",
+          "provider_cloudflare_workers_ai_account": "Required for Cloudflare Workers AI; find the account ID in your Cloudflare dashboard.",
+          "provider_cloudflare_workers_ai_api_key": "Required. Workers AI has a free daily allocation subject to Cloudflare limits.",
+          "provider_google_gemini_account": "Informational only; not sent to the API.",
+          "provider_google_gemini_api_key": "Required. Free availability depends on the Google AI Studio model and plan.",
+          "provider_huggingface_account": "Informational only; not sent to the API.",
+          "provider_huggingface_api_key": "Required. Hugging Face Inference may require paid credits or a paid plan.",
+          "provider_openai_compatible_account": "Informational only; not sent to the API.",
+          "provider_openai_compatible_api_key": "Sent as a bearer token when provided; endpoint costs depend on its service.",
+          "provider_openai_compatible_base_url": "Required to configure this endpoint; costs depend on the service.",
           "update_interval": "How often both images are regenerated.",
           "output_dir": "Absolute path inside Home Assistant. Anything under /config/www is reachable at /local/...",
           "retention_mode": "Overwrite: only the current file. Keep last N: archives the previous versions and keeps the newest N. Keep for N days: archives and deletes anything older.",
@@ -61,12 +85,13 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "filename": "The current image always keeps this name, so dashboards can use a stable URL.",
           "negative_prompt": "Comma separated words to avoid. They are appended to the prompt because Pollinations has no dedicated negative prompt parameter.",
-          "model": "zimage and flux are free. gptimage-family models may need an API key.",
+          "model": "Choose a model supported by the selected provider. Gemini uses Gemini image models; Hugging Face requires a model ID available through Inference Providers.",
           "seed": "-1 means a new random seed on every run; a fixed value gives reproducible results.",
           "quality": "Only honoured by gptimage, gptimage-large and gpt-image-2.",
           "transparent": "Only honoured by gptimage-family models.",
@@ -76,7 +101,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       },
       "slot_2": {
@@ -102,7 +128,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -110,14 +137,16 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot reach the provider.",
       "invalid_auth": "The API key was rejected.",
-      "invalid_directory": "The output folder does not exist or is not writable."
+      "invalid_directory": "The output folder does not exist or is not writable.",
+      "invalid_provider_config": "A base URL is required for the OpenAI-compatible endpoint."
     },
     "abort": {
       "already_configured": "An entry with this name already exists."
@@ -135,10 +164,26 @@
       },
       "general": {
         "title": "General settings",
+        "description": "The preferred provider is tried first. Other providers with saved credentials are used automatically as fallback; paid services may incur charges.",
         "data": {
           "provider": "Provider",
-          "base_url": "API base URL (optional)",
-          "api_key": "API key (optional)",
+          "provider_pollinations_account": "Pollinations.ai — User/account (optional)",
+          "provider_pollinations_api_key": "Pollinations.ai — API key (optional)",
+          "provider_pollinations_base_url": "Pollinations.ai — Base URL (optional)",
+          "provider_pollinations_clear": "Pollinations.ai — Clear saved credentials",
+          "provider_cloudflare_workers_ai_account": "Cloudflare Workers AI — Account ID",
+          "provider_cloudflare_workers_ai_api_key": "Cloudflare Workers AI — API token",
+          "provider_cloudflare_workers_ai_clear": "Cloudflare Workers AI — Clear saved credentials",
+          "provider_google_gemini_account": "Google Gemini — User/account (optional)",
+          "provider_google_gemini_api_key": "Google Gemini — API key",
+          "provider_google_gemini_clear": "Google Gemini — Clear saved credentials",
+          "provider_huggingface_account": "Hugging Face — User/account (optional)",
+          "provider_huggingface_api_key": "Hugging Face — API token",
+          "provider_huggingface_clear": "Hugging Face — Clear saved credentials",
+          "provider_openai_compatible_account": "OpenAI-compatible — User/account (optional)",
+          "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
+          "provider_openai_compatible_base_url": "OpenAI-compatible — API base URL",
+          "provider_openai_compatible_clear": "OpenAI-compatible — Clear saved credentials",
           "update_interval": "Update interval",
           "update_interval_unit": "Interval unit",
           "output_dir": "Output folder",
@@ -176,7 +221,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -184,7 +230,8 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       },
       "slot_2": {
@@ -209,7 +256,8 @@
           "exact_size": "Resize to the exact size",
           "fit": "Resize mode",
           "output_format": "File format",
-          "color_mode": "Colour mode"
+          "color_mode": "Colour mode",
+          "bw_levels": "Black & white levels (2-8)"
         },
         "data_description": {
           "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
@@ -217,14 +265,16 @@
           "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
           "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
           "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels."
+          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
+          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot reach the provider.",
       "invalid_auth": "The API key was rejected.",
-      "invalid_directory": "The output folder does not exist or is not writable."
+      "invalid_directory": "The output folder does not exist or is not writable.",
+      "invalid_provider_config": "A base URL is required for the OpenAI-compatible endpoint."
     }
   },
   "selector": {
