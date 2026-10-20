@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -17,7 +17,11 @@ from homeassistant.util import dt as dt_util
 from . import image_utils, storage
 from .const import (
     CONF_API_KEY,
+    CONF_ACCOUNT_ID,
     CONF_BASE_URL,
+    CONF_FALLBACK_ACCOUNT_ID,
+    CONF_FALLBACK_API_KEY,
+    CONF_FALLBACK_PROVIDERS,
     CONF_GENERATE_ON_START,
     CONF_HISTORY_SUBDIR,
     CONF_INTERVAL,
@@ -76,7 +80,14 @@ from .const import (
     RETENTION_OVERWRITE,
     UNIT_HOURS,
 )
-from .providers import ImageRequest, ProviderError, ProviderRateLimit, build_provider
+from .providers import (
+    ImageRequest,
+    ImageResult,
+    ProviderError,
+    ProviderRateLimit,
+    build_provider,
+    get_provider_class,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -116,6 +127,7 @@ class SlotState:
     last_url: str | None = None
     last_seed: int | None = None
     last_model: str | None = None
+    last_provider: str | None = None
     last_error: str | None = None
     last_bytes: int | None = None
     history_count: int = 0
@@ -214,6 +226,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
                 slot.last_url = old.last_url
                 slot.last_seed = old.last_seed
                 slot.last_model = old.last_model
+                slot.last_provider = old.last_provider
                 slot.last_error = old.last_error
                 slot.history_count = old.history_count
                 slot.image_data = old.image_data
@@ -283,12 +296,36 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
 
     async def _async_run_slot(self, slot: SlotState, source: str) -> bool:
         session = async_get_clientsession(self.hass)
-        provider = build_provider(
-            str(self._opt(CONF_PROVIDER, DEFAULT_PROVIDER)),
-            session,
-            base_url=self.options.get(CONF_BASE_URL) or None,
-            api_key=self.options.get(CONF_API_KEY) or None,
-        )
+        primary_slug = str(self._opt(CONF_PROVIDER, DEFAULT_PROVIDER))
+        provider_configs = [
+            (
+                primary_slug,
+                self.options.get(CONF_BASE_URL) or None,
+                self.options.get(CONF_API_KEY) or None,
+                self.options.get(CONF_ACCOUNT_ID) or None,
+            )
+        ]
+        seen_providers = {primary_slug}
+        for fallback_slug in self.options.get(CONF_FALLBACK_PROVIDERS, []):
+            if fallback_slug in seen_providers:
+                continue
+            fallback_cls = get_provider_class(fallback_slug)
+            if not fallback_cls.is_free:
+                _LOGGER.error("Ignoring non-free fallback provider '%s'", fallback_slug)
+                continue
+            seen_providers.add(fallback_slug)
+            provider_configs.append(
+                (
+                    fallback_slug,
+                    None,
+                    self.options.get(CONF_FALLBACK_API_KEY)
+                    if fallback_cls.requires_api_key
+                    else None,
+                    self.options.get(CONF_FALLBACK_ACCOUNT_ID)
+                    if fallback_cls.requires_account_id
+                    else None,
+                )
+            )
         request = ImageRequest(
             prompt=slot.prompt,
             negative_prompt=slot.negative_prompt,
@@ -304,35 +341,62 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
         )
 
         retries = max(int(self._opt(CONF_RETRIES, DEFAULT_RETRIES)), 0)
-        result = None
+        result: ImageResult | None = None
+        used_provider: str | None = None
         last_error: str | None = None
 
-        for attempt in range(retries + 1):
-            try:
-                result = await provider.async_generate(request)
-                break
-            except ProviderRateLimit as err:
-                last_error = str(err)
-                delay = err.retry_after or (15 * (attempt + 1))
-                if attempt < retries:
-                    _LOGGER.warning(
-                        "%s rate limited, retrying in %ss", slot.name, delay
+        for slug, base_url, api_key, account_id in provider_configs:
+            provider = build_provider(
+                slug,
+                session,
+                base_url=base_url,
+                api_key=api_key,
+                account_id=account_id,
+            )
+            provider_request = request
+            if slug == "pollinations" and str(request.model).startswith("@cf/"):
+                provider_request = replace(request, model=DEFAULT_MODEL)
+            for attempt in range(retries + 1):
+                try:
+                    result = await provider.async_generate(provider_request)
+                    used_provider = slug
+                    break
+                except ProviderRateLimit as err:
+                    last_error = f"{slug}: {err}"
+                    delay = err.retry_after or (15 * (attempt + 1))
+                    if attempt < retries:
+                        _LOGGER.warning(
+                            "%s rate limited for %s, retrying in %ss",
+                            slot.name,
+                            slug,
+                            delay,
+                        )
+                        await asyncio.sleep(min(delay, 120))
+                except ProviderError as err:
+                    last_error = f"{slug}: {err}"
+                    if attempt < retries:
+                        await asyncio.sleep(5 * (attempt + 1))
+                except Exception as err:  # noqa: BLE001 - never kill the timer
+                    last_error = f"{slug}: unexpected error: {err}"
+                    _LOGGER.exception(
+                        "Unexpected error generating %s with %s", slot.name, slug
                     )
-                    await asyncio.sleep(min(delay, 120))
-            except ProviderError as err:
-                last_error = str(err)
-                if attempt < retries:
-                    await asyncio.sleep(5 * (attempt + 1))
-            except Exception as err:  # noqa: BLE001 - never kill the timer
-                last_error = f"Unexpected error: {err}"
-                _LOGGER.exception("Unexpected error generating %s", slot.name)
+                    break
+            if result is not None:
                 break
+            if len(provider_configs) > 1:
+                _LOGGER.warning(
+                    "%s failed with provider %s; trying the next configured provider",
+                    slot.name,
+                    slug,
+                )
 
         if result is None:
             slot.last_error = last_error or "Unknown error"
             _LOGGER.error("Generation failed for %s: %s", slot.name, slot.last_error)
             return False
 
+        result.provider = used_provider
         target_w = int(slot.config.get(CONF_SLOT_WIDTH) or DEFAULT_WIDTH)
         target_h = int(slot.config.get(CONF_SLOT_HEIGHT) or DEFAULT_HEIGHT)
         exact_size = bool(slot.config.get(CONF_SLOT_EXACT_SIZE, DEFAULT_EXACT_SIZE))
@@ -379,7 +443,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             metadata = {
                 "generated_at": dt_util.utcnow().isoformat(),
                 "source": source,
-                "provider": str(self._opt(CONF_PROVIDER, DEFAULT_PROVIDER)),
+                "provider": used_provider,
                 "model": result.model,
                 "seed": result.seed,
                 "prompt": slot.prompt,
@@ -420,6 +484,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
         slot.last_url = result.url
         slot.last_seed = result.seed
         slot.last_model = result.model
+        slot.last_provider = used_provider
         slot.last_bytes = len(result.content)
         slot.history_count = save.history_count
         slot.last_error = None

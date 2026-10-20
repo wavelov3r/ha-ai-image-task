@@ -21,7 +21,11 @@ from . import storage
 from .image_utils import COLOR_MODES, FIT_MODES, OUTPUT_FORMATS
 from .const import (
     CONF_API_KEY,
+    CONF_ACCOUNT_ID,
     CONF_BASE_URL,
+    CONF_FALLBACK_ACCOUNT_ID,
+    CONF_FALLBACK_API_KEY,
+    CONF_FALLBACK_PROVIDERS,
     CONF_GENERATE_ON_START,
     CONF_HISTORY_SUBDIR,
     CONF_INTERVAL,
@@ -135,6 +139,37 @@ def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Sche
             ): selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             ),
+            vol.Optional(
+                CONF_ACCOUNT_ID,
+                description={"suggested_value": defaults.get(CONF_ACCOUNT_ID, "")},
+            ): selector.TextSelector(),
+            vol.Optional(
+                CONF_FALLBACK_PROVIDERS,
+                default=_get(defaults, CONF_FALLBACK_PROVIDERS, []),
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value=o["value"], label=o["label"])
+                        for o in provider_options(free_only=True)
+                    ],
+                    multiple=True,
+                    mode=selector.SelectSelectorMode.LIST,
+                )
+            ),
+            vol.Optional(
+                CONF_FALLBACK_API_KEY,
+                description={
+                    "suggested_value": defaults.get(CONF_FALLBACK_API_KEY, "")
+                },
+            ): selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+            ),
+            vol.Optional(
+                CONF_FALLBACK_ACCOUNT_ID,
+                description={
+                    "suggested_value": defaults.get(CONF_FALLBACK_ACCOUNT_ID, "")
+                },
+            ): selector.TextSelector(),
             vol.Required(
                 CONF_INTERVAL, default=_get(defaults, CONF_INTERVAL, DEFAULT_INTERVAL)
             ): selector.NumberSelector(
@@ -238,6 +273,11 @@ def slot_schema(
     """Schema for one image slot."""
     provider_cls = get_provider_class(provider_slug)
     extra = provider_cls.extra_options
+    model_default = _get(defaults, CONF_SLOT_MODEL, DEFAULT_MODEL)
+    if provider_slug == "cloudflare_workers_ai":
+        model_default = provider_cls.models[0]
+    elif model_default.startswith("@cf/"):
+        model_default = DEFAULT_MODEL
 
     fields: dict[Any, Any] = {
         vol.Required(
@@ -263,11 +303,11 @@ def slot_schema(
             description={"suggested_value": defaults.get(CONF_SLOT_NEGATIVE, "")},
         ): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
         vol.Required(
-            CONF_SLOT_MODEL, default=_get(defaults, CONF_SLOT_MODEL, DEFAULT_MODEL)
+            CONF_SLOT_MODEL, default=model_default
         ): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=list(provider_cls.models),
-                custom_value=True,
+                custom_value=provider_slug != "cloudflare_workers_ai",
                 mode=selector.SelectSelectorMode.DROPDOWN,
             )
         ),
@@ -393,8 +433,15 @@ def normalise_general(data: dict[str, Any]) -> dict[str, Any]:
     # Optional text fields are omitted from user_input entirely when the user
     # clears them in the UI; default them to "" so a later dict.update() on
     # the stored options actually clears the old value instead of keeping it.
-    for key in (CONF_BASE_URL, CONF_API_KEY):
+    for key in (
+        CONF_BASE_URL,
+        CONF_API_KEY,
+        CONF_ACCOUNT_ID,
+        CONF_FALLBACK_API_KEY,
+        CONF_FALLBACK_ACCOUNT_ID,
+    ):
         out.setdefault(key, "")
+    out.setdefault(CONF_FALLBACK_PROVIDERS, [])
     return out
 
 
@@ -422,13 +469,48 @@ async def async_validate_general(hass, data: dict[str, Any]) -> dict[str, str]:
         async_get_clientsession(hass),
         base_url=data.get(CONF_BASE_URL) or None,
         api_key=data.get(CONF_API_KEY) or None,
+        account_id=data.get(CONF_ACCOUNT_ID) or None,
     )
     try:
         await provider.async_validate()
-    except ProviderAuthError:
-        errors[CONF_API_KEY] = "invalid_auth"
+    except ProviderAuthError as err:
+        field = CONF_ACCOUNT_ID if "account ID" in str(err) else CONF_API_KEY
+        errors[field] = "invalid_auth"
     except ProviderError:
         errors["base"] = "cannot_connect"
+
+    for fallback_slug in data.get(CONF_FALLBACK_PROVIDERS, []):
+        if fallback_slug == data[CONF_PROVIDER]:
+            continue
+        fallback_cls = get_provider_class(fallback_slug)
+        if not fallback_cls.is_free:
+            errors[CONF_FALLBACK_PROVIDERS] = "invalid_fallback"
+            continue
+        fallback_provider = build_provider(
+            fallback_slug,
+            async_get_clientsession(hass),
+            api_key=(
+                data.get(CONF_FALLBACK_API_KEY)
+                if fallback_cls.requires_api_key
+                else None
+            ),
+            account_id=(
+                data.get(CONF_FALLBACK_ACCOUNT_ID)
+                if fallback_cls.requires_account_id
+                else None
+            ),
+        )
+        try:
+            await fallback_provider.async_validate()
+        except ProviderAuthError as err:
+            field = (
+                CONF_FALLBACK_ACCOUNT_ID
+                if "account ID" in str(err)
+                else CONF_FALLBACK_API_KEY
+            )
+            errors[field] = "invalid_auth"
+        except ProviderError:
+            errors["base"] = "cannot_connect"
     return errors
 
 

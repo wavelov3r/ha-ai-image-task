@@ -52,6 +52,7 @@ class AiImageTaskStatusSensor(AiImageTaskEntity, SensorEntity):
             "filename": slot.filename,
             "file_path": slot.last_path,
             "model": slot.last_model,
+            "provider": slot.last_provider,
             "seed": slot.last_seed,
             "size_bytes": slot.last_bytes,
             "source_url": slot.last_url,

@@ -65,6 +65,7 @@ class AiImageTaskImage(AiImageTaskEntity, ImageEntity):
             "prompt": slot.prompt,
             "negative_prompt": slot.negative_prompt,
             "model": slot.last_model,
+            "provider": slot.last_provider,
             "seed": slot.last_seed,
             "source_url": slot.last_url,
             "status": slot.status,
