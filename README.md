@@ -2,7 +2,7 @@
 
 [![hacs][hacs-badge]][hacs-url]
 
-Custom integration per Home Assistant che genera **fino a 2 immagini AI** a intervalli regolari e le salva su disco con un nome stabile, pensata per cornici e-ink, dashboard, frigoriferi smart e simili.
+Custom integration per Home Assistant che genera **un'immagine AI** per ogni integrazione aggiunta e la salva su disco con un nome stabile, pensata per cornici e-ink, dashboard, frigoriferi smart e simili. Per più immagini aggiungi più volte l'integrazione da **Impostazioni → Dispositivi e servizi**.
 
 Il provider preferito è **[Pollinations.ai](https://pollinations.ai)**, utilizzabile senza chiave API. Sono disponibili anche Cloudflare Workers AI, Google Gemini API / AI Studio, Hugging Face Inference Providers e endpoint OpenAI-compatible. Se il preferito fallisce, vengono provati automaticamente gli altri provider configurati.
 
@@ -10,8 +10,8 @@ Il provider preferito è **[Pollinations.ai](https://pollinations.ai)**, utilizz
 
 ## Caratteristiche
 
-- 2 slot immagine indipendenti (prompt, prompt negativo, modello, dimensioni, seed, nome file).
-- Un solo intervallo di aggiornamento per entrambe, in **minuti oppure ore**.
+- Un'immagine per integrazione (prompt, prompt negativo, modello, dimensioni, seed, nome file); aggiungi quante integrazioni vuoi.
+- Nessun aggiornamento automatico a intervalli: la generazione parte all'avvio (opzionale), dal pulsante o dai servizi, ad esempio da un'automazione.
 - Cartella di output configurabile (default `/config/www/einkfrigo/images`).
 - Il file corrente mantiene **sempre lo stesso nome** → l'URL `/local/...` non cambia mai.
 - Tre politiche di conservazione:
@@ -19,10 +19,9 @@ Il provider preferito è **[Pollinations.ai](https://pollinations.ai)**, utilizz
   - **Conserva le ultime N** — la versione precedente viene archiviata con timestamp, si tengono le N più recenti.
   - **Conserva per N giorni** — archivia ed elimina gli archivi più vecchi di N giorni.
 - Scrittura atomica (`.tmp` + `os.replace`): nessun file troncato letto a metà da un e-ink.
-- Sfasamento configurabile tra le due richieste, per rispettare il rate limit anonimo di Pollinations (≈1 richiesta ogni 15 s).
 - Retry automatici con backoff su errori e `429`; fallback automatico tra provider configurati.
 - Provider: Pollinations.ai (nessuna chiave obbligatoria), Cloudflare Workers AI (token e ID account obbligatori, quota giornaliera gratuita), Google Gemini (chiave API) e Hugging Face (token; crediti/uso a pagamento). È disponibile anche un endpoint OpenAI-compatible.
-- Entità per slot: `image`, `sensor` (stato / ultima generazione / archivi), `button` (genera ora, svuota storico), `switch` (aggiornamento automatico), `text` (prompt e prompt negativo modificabili dalla dashboard).
+- Entità per slot: `image`, `sensor` (stato / ultima generazione / archivi), `button` (genera ora, svuota storico), `text` (prompt e prompt negativo modificabili dalla dashboard).
 - Servizi: `ai_image_task.generate`, `ai_image_task.set_prompt`, `ai_image_task.clear_history`.
 - Interfaccia tradotta in italiano e inglese.
 
@@ -50,21 +49,18 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 | Cloudflare Workers AI | API token e ID account obbligatori; quota gratuita giornaliera limitata. |
 | OpenAI-compatible | URL base obbligatorio; l'API key dipende dall'endpoint. I costi dipendono dal servizio. |
 | Rimuovi credenziali salvate | Seleziona il checkbox del provider per cancellare le credenziali memorizzate. |
-| Intervallo + unità | Ogni quanto rigenerare (minuti oppure ore). |
 | Cartella di destinazione | Default `/config/www/einkfrigo/images`. Viene creata se non esiste. |
 | Politica di conservazione | `Sovrascrivi`, `Conserva le ultime N`, `Conserva per N giorni`. |
 | Sottocartella storico | Default `history`. Vuoto = archivia accanto al file corrente. |
-| Attesa tra le due immagini | Default 20 s (rate limit anonimo Pollinations). |
 | Timeout / Tentativi | Default 180 s, 2 tentativi. |
 | Template prompt negativo | Default `{prompt}\n\nAvoid the following: {negative}.` |
 | Metadati `.json` | Salva accanto all'immagine prompt, modello, seed, URL. |
 | Genera all'avvio | Se attivo, genera subito dopo avvio/ricaricamento. |
 
-### Passo 2 e 3 — Immagine 1 e Immagine 2
+### Passo 2 — Immagine
 
 | Campo | Descrizione |
 |---|---|
-| Attiva | Disattiva lo slot 2 se ti serve una sola immagine. |
 | Nome file | Es. `frigo_left.jpg`. Il file corrente mantiene sempre questo nome. |
 | Prompt / Prompt negativo | Si impostano dalle entità `text` dello slot o con il servizio `ai_image_task.set_prompt`. |
 | Modello | Pollinations: `zimage` (default) e altri modelli del provider. Cloudflare usa FLUX.1 schnell. Gemini propone i modelli image disponibili nell'API Gemini. Hugging Face usa `stabilityai/stable-diffusion-3-medium-diffusers` come default; si possono inserire altri model ID abilitati per il proprio account/provider. |
@@ -93,7 +89,7 @@ Copia la cartella `custom_components/ai_image_task` in `/config/custom_component
 
 Il provider preferito viene provato per primo; per ogni provider sono eseguiti i tentativi configurati prima di passare al successivo. I provider a pagamento configurati possono essere chiamati automaticamente come fallback e comportare costi. Il sensore di stato e i metadati indicano quale provider ha generato l'immagine.
 
-Tutte le impostazioni sono modificabili in seguito da **Configura** sull'integrazione, con un menu a tre voci (Generale / Immagine 1 / Immagine 2).
+Tutte le impostazioni sono modificabili in seguito da **Configura** sull'integrazione, con un menu a due voci (Generale / Immagine).
 
 ## Come vengono organizzati i file
 
@@ -111,8 +107,8 @@ Con `Conserva le ultime 5` e nome file `frigo_left.jpg`:
         └── ...                        ← le più vecchie vengono eliminate
 ```
 
-Ogni slot (immagine 1, immagine 2, ...) ha la propria sottocartella dentro
-`history/`, così lo storico delle due immagini non si mescola mai nella
+Ogni integrazione ha la propria sottocartella dentro
+`history/` (una per nome file), così lo storico di immagini diverse non si mescola mai nella
 stessa cartella.
 
 URL stabile per una cornice e-ink o una picture card: `http://homeassistant.local:8123/local/einkfrigo/images/frigo_left.jpg`
@@ -126,7 +122,6 @@ URL stabile per una cornice e-ink o una picture card: `http://homeassistant.loca
 | `sensor` ultima generazione | `..._last_generated` | Timestamp. |
 | `sensor` archivi | `..._archived_images` | Quante copie storiche ci sono. |
 | `button` | `..._generate_now`, `..._clear_history` | |
-| `switch` | `..._automatic_update` | Off = lo slot viene saltato dalla schedulazione. Stato ripristinato al riavvio. |
 | `text` | `..._prompt`, `..._negative_prompt` | Modifica al volo (max 255 caratteri, limite di HA). |
 
 ## Servizi
@@ -150,7 +145,7 @@ data:
 # Svuota lo storico
 action: ai_image_task.clear_history
 data:
-  slot: 2
+  slot: 1
 ```
 
 ### Esempio: prompt dinamico in base al meteo
@@ -210,7 +205,7 @@ Consigli per pannelli e-ink:
 
 ## Limiti e note
 
-- Uso anonimo di Pollinations: circa **1 richiesta ogni 15 secondi**. Tieni l'attesa tra le due immagini ≥ 15 s e non impostare intervalli troppo aggressivi.
+- Uso anonimo di Pollinations: circa **1 richiesta ogni 15 secondi**. Non lanciare generazioni troppo ravvicinate.
 - Il servizio è gratuito e "best effort": i fallimenti occasionali sono normali, per questo esistono i retry e l'ultima immagine valida resta sul disco.
 - Le entità `text` sono limitate a 255 caratteri da Home Assistant; per prompt lunghi usa il servizio `ai_image_task.set_prompt`.
 - Qualsiasi cosa dentro `/config/www` è servita da Home Assistant **senza autenticazione**: non generare immagini che contengano dati sensibili.
