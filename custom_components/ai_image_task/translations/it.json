@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "AI Image Task - impostazioni generali",
-        "description": "Scegli il servizio di generazione e ogni quanto rigenerare le immagini.",
+        "description": "Scegli il servizio di generazione.",
         "data": {
           "name": "Nome",
           "provider": "Servizio",
@@ -24,14 +24,11 @@
           "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
           "provider_openai_compatible_base_url": "OpenAI-compatible — URL base API",
           "provider_openai_compatible_clear": "OpenAI-compatible — Rimuovi credenziali salvate",
-          "update_interval": "Intervallo di aggiornamento",
-          "update_interval_unit": "Unità dell'intervallo",
           "output_dir": "Cartella di destinazione",
           "retention_mode": "Politica di conservazione",
           "keep_count": "Conserva le ultime N immagini",
           "keep_days": "Elimina le immagini più vecchie di (giorni)",
           "history_subdir": "Sottocartella storico",
-          "stagger_seconds": "Attesa tra le due immagini (s)",
           "timeout": "Timeout richiesta (s)",
           "retries": "Tentativi in caso di errore",
           "negative_template": "Template del prompt negativo",
@@ -51,22 +48,18 @@
           "provider_openai_compatible_account": "Campo informativo, non inviato all'API.",
           "provider_openai_compatible_api_key": "Usata come bearer token se valorizzata; il costo dipende dall'endpoint.",
           "provider_openai_compatible_base_url": "Obbligatorio per configurare l'endpoint; il costo dipende dal servizio.",
-          "update_interval": "Ogni quanto vengono rigenerate entrambe le immagini.",
           "output_dir": "Percorso assoluto dentro Home Assistant. Tutto ciò che sta sotto /config/www è raggiungibile da /local/...",
           "retention_mode": "Sovrascrivi: solo il file corrente. Conserva le ultime N: archivia le versioni precedenti tenendo le N più recenti. Conserva per N giorni: archivia ed elimina quelle più vecchie.",
           "keep_count": "Usato solo dalla politica 'Conserva le ultime N'.",
           "keep_days": "Usato solo dalla politica 'Conserva per N giorni'.",
           "history_subdir": "Sottocartella in cui archiviare le versioni precedenti. Lascia vuoto per archiviarle accanto al file corrente.",
-          "stagger_seconds": "L'uso anonimo di Pollinations è limitato a circa una richiesta ogni 15 secondi.",
           "negative_template": "Come le parole negative vengono unite al prompt. Segnaposto: {prompt} e {negative}.",
-          "generate_on_start": "Disattiva se preferisci attendere la prima esecuzione pianificata."
+          "generate_on_start": "Disattiva se preferisci generare manualmente."
         }
       },
       "slot_1": {
         "title": "Immagine 1",
-        "description": "Impostazioni della prima immagine.",
         "data": {
-          "enabled": "Attiva",
           "name": "Nome slot",
           "filename": "Nome file",
           "model": "Modello",
@@ -101,40 +94,6 @@
           "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink.",
           "bw_levels": "Usato solo con Modalita colore 'bw': numero di livelli di grigio con dithering Floyd-Steinberg (2 = bianco/nero puro)."
         }
-      },
-      "slot_2": {
-        "title": "Immagine 2",
-        "description": "Impostazioni della seconda immagine. Disattiva 'Attiva' se ti serve una sola immagine.",
-        "data": {
-          "enabled": "Attiva",
-          "name": "Nome slot",
-          "filename": "Nome file",
-          "model": "Modello",
-          "width": "Larghezza (px)",
-          "height": "Altezza (px)",
-          "seed": "Seed",
-          "quality": "Qualità",
-          "transparent": "Sfondo trasparente",
-          "safe": "Modalità sicura",
-          "nologo": "Rimuovi filigrana",
-          "private": "Generazione privata",
-          "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento",
-          "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento",
-          "output_format": "Formato file",
-          "color_mode": "Modalità colore",
-          "bw_levels": "Livelli bianco e nero (2-8)"
-        },
-        "data_description": {
-          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
-          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
-          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
-          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
-          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink.",
-          "bw_levels": "Usato solo con Modalita colore 'bw': numero di livelli di grigio con dithering Floyd-Steinberg (2 = bianco/nero puro)."
-        }
       }
     },
     "error": {
@@ -153,8 +112,7 @@
         "title": "AI Image Task",
         "menu_options": {
           "general": "Impostazioni generali",
-          "slot_1": "Immagine 1",
-          "slot_2": "Immagine 2"
+          "slot_1": "Immagine"
         }
       },
       "general": {
@@ -179,14 +137,11 @@
           "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
           "provider_openai_compatible_base_url": "OpenAI-compatible — URL base API",
           "provider_openai_compatible_clear": "OpenAI-compatible — Rimuovi credenziali salvate",
-          "update_interval": "Intervallo di aggiornamento",
-          "update_interval_unit": "Unità dell'intervallo",
           "output_dir": "Cartella di destinazione",
           "retention_mode": "Politica di conservazione",
           "keep_count": "Conserva le ultime N immagini",
           "keep_days": "Elimina le immagini più vecchie di (giorni)",
           "history_subdir": "Sottocartella storico",
-          "stagger_seconds": "Attesa tra le due immagini (s)",
           "timeout": "Timeout richiesta (s)",
           "retries": "Tentativi in caso di errore",
           "negative_template": "Template del prompt negativo",
@@ -197,40 +152,6 @@
       "slot_1": {
         "title": "Immagine 1",
         "data": {
-          "enabled": "Attiva",
-          "name": "Nome slot",
-          "filename": "Nome file",
-          "model": "Modello",
-          "width": "Larghezza (px)",
-          "height": "Altezza (px)",
-          "seed": "Seed",
-          "quality": "Qualità",
-          "transparent": "Sfondo trasparente",
-          "safe": "Modalità sicura",
-          "nologo": "Rimuovi filigrana",
-          "private": "Generazione privata",
-          "enhance": "Migliora il prompt",
-          "reference_image": "URL immagine di riferimento",
-          "exact_size": "Ridimensiona alla misura esatta",
-          "fit": "Modalità di adattamento",
-          "output_format": "Formato file",
-          "color_mode": "Modalità colore",
-          "bw_levels": "Livelli bianco e nero (2-8)"
-        },
-        "data_description": {
-          "width": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
-          "height": "Misura richiesta. I backend rifiutano lati sotto i 512px, quindi viene generata un'immagine più grande e poi ridotta.",
-          "exact_size": "Ritaglia/ridimensiona in modo che il file salvato abbia esattamente la larghezza e l'altezza indicate (richiede Pillow).",
-          "fit": "cover ritaglia per riempire, contain aggiunge bande bianche, stretch deforma.",
-          "output_format": "auto segue l'estensione del file (un file .png contiene davvero PNG). Pollinations restituisce sempre JPEG, quindi scegli PNG per online_image di ESPHome.",
-          "color_mode": "Scala di grigi e bianco/nero (con dithering) producono file molto più piccoli per i pannelli e-ink.",
-          "bw_levels": "Usato solo con Modalita colore 'bw': numero di livelli di grigio con dithering Floyd-Steinberg (2 = bianco/nero puro)."
-        }
-      },
-      "slot_2": {
-        "title": "Immagine 2",
-        "data": {
-          "enabled": "Attiva",
           "name": "Nome slot",
           "filename": "Nome file",
           "model": "Modello",
@@ -269,12 +190,6 @@
     }
   },
   "selector": {
-    "interval_unit": {
-      "options": {
-        "minutes": "Minuti",
-        "hours": "Ore"
-      }
-    },
     "retention_mode": {
       "options": {
         "overwrite": "Sovrascrivi (nessuno storico)",
@@ -337,11 +252,6 @@
         "name": "Svuota storico"
       }
     },
-    "switch": {
-      "auto_update": {
-        "name": "Aggiornamento automatico"
-      }
-    },
     "text": {
       "prompt": {
         "name": "Prompt"
@@ -354,7 +264,7 @@
   "services": {
     "generate": {
       "name": "Genera adesso",
-      "description": "Forza la generazione immediata di uno o entrambi gli slot.",
+      "description": "Forza la generazione immediata dell'immagine.",
       "fields": {
         "config_entry_id": {
           "name": "Configurazione",
