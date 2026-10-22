@@ -162,23 +162,6 @@ def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Sche
                 )
             ),
             vol.Required(
-                CONF_INTERVAL, default=_get(defaults, CONF_INTERVAL, DEFAULT_INTERVAL)
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=1, max=10000, step=1, mode=selector.NumberSelectorMode.BOX
-                )
-            ),
-            vol.Required(
-                CONF_INTERVAL_UNIT,
-                default=_get(defaults, CONF_INTERVAL_UNIT, DEFAULT_INTERVAL_UNIT),
-            ): selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=INTERVAL_UNITS,
-                    translation_key="interval_unit",
-                    mode=selector.SelectSelectorMode.DROPDOWN,
-                )
-            ),
-            vol.Required(
                 CONF_OUTPUT_DIR,
                 default=_get(defaults, CONF_OUTPUT_DIR, DEFAULT_OUTPUT_DIR),
             ): selector.TextSelector(),
@@ -214,13 +197,6 @@ def general_schema(defaults: dict[str, Any], with_name: bool = True) -> vol.Sche
                     )
                 },
             ): selector.TextSelector(),
-            vol.Required(
-                CONF_STAGGER, default=_get(defaults, CONF_STAGGER, DEFAULT_STAGGER)
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0, max=600, step=1, mode=selector.NumberSelectorMode.BOX
-                )
-            ),
             vol.Required(
                 CONF_TIMEOUT, default=_get(defaults, CONF_TIMEOUT, DEFAULT_TIMEOUT)
             ): selector.NumberSelector(
@@ -308,10 +284,6 @@ def slot_schema(
         model_default = provider_cls.models[0]
 
     fields: dict[Any, Any] = {
-        vol.Required(
-            CONF_SLOT_ENABLED,
-            default=_get(defaults, CONF_SLOT_ENABLED, index == 0),
-        ): selector.BooleanSelector(),
         vol.Required(
             CONF_SLOT_NAME,
             default=_get(defaults, CONF_SLOT_NAME, f"Image {index + 1}"),
@@ -441,10 +413,8 @@ def normalise_general(data: dict[str, Any]) -> dict[str, Any]:
     """Coerce numeric selector output to ints."""
     out = dict(data)
     for key in (
-        CONF_INTERVAL,
         CONF_KEEP_COUNT,
         CONF_KEEP_DAYS,
-        CONF_STAGGER,
         CONF_TIMEOUT,
         CONF_RETRIES,
     ):
@@ -555,33 +525,18 @@ class AiImageTaskConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            self._slots = [normalise_slot(user_input)]
-            return await self.async_step_slot_2()
-        return self.async_show_form(
-            step_id="slot_1",
-            data_schema=slot_schema(0, self._general[CONF_PROVIDER], {}),
-        )
-
-    async def async_step_slot_2(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        if user_input is not None:
-            self._slots.append(normalise_slot(user_input))
+            slots = [normalise_slot(user_input)]
             title = self._general.pop(CONF_NAME, DEFAULT_NAME)
             await self.async_set_unique_id(f"{DOMAIN}_{title.lower().strip()}")
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title=title,
                 data={},
-                options={**self._general, CONF_SLOTS: self._slots},
+                options={**self._general, CONF_SLOTS: slots},
             )
         return self.async_show_form(
-            step_id="slot_2",
-            data_schema=slot_schema(
-                1,
-                self._general[CONF_PROVIDER],
-                {CONF_SLOT_ENABLED: False},
-            ),
+            step_id="slot_1",
+            data_schema=slot_schema(0, self._general[CONF_PROVIDER], {}),
         )
 
     @staticmethod
@@ -612,7 +567,7 @@ class AiImageTaskOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["general", "slot_1", "slot_2"]
+            step_id="init", menu_options=["general", "slot_1"]
         )
 
     async def async_step_general(
@@ -656,11 +611,6 @@ class AiImageTaskOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return await self._async_slot_step(0, "slot_1", user_input)
-
-    async def async_step_slot_2(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        return await self._async_slot_step(1, "slot_2", user_input)
 
     async def _async_slot_step(
         self, index: int, step_id: str, user_input: dict[str, Any] | None

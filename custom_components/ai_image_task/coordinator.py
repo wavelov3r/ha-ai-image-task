@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -18,8 +18,6 @@ from . import image_utils, storage
 from .const import (
     CONF_GENERATE_ON_START,
     CONF_HISTORY_SUBDIR,
-    CONF_INTERVAL,
-    CONF_INTERVAL_UNIT,
     CONF_KEEP_COUNT,
     CONF_KEEP_DAYS,
     CONF_NEGATIVE_TEMPLATE,
@@ -42,7 +40,6 @@ from .const import (
     CONF_SLOT_SEED,
     CONF_SLOT_WIDTH,
     CONF_SLOTS,
-    CONF_STAGGER,
     CONF_TIMEOUT,
     CONF_WRITE_METADATA,
     DEFAULT_BW_LEVELS,
@@ -53,8 +50,6 @@ from .const import (
     DEFAULT_GENERATE_ON_START,
     DEFAULT_HEIGHT,
     DEFAULT_HISTORY_SUBDIR,
-    DEFAULT_INTERVAL,
-    DEFAULT_INTERVAL_UNIT,
     DEFAULT_KEEP_COUNT,
     DEFAULT_KEEP_DAYS,
     DEFAULT_MODEL,
@@ -65,14 +60,12 @@ from .const import (
     DEFAULT_RETRIES,
     DEFAULT_SEED,
     DEFAULT_SLOT_FILENAMES,
-    DEFAULT_STAGGER,
     DEFAULT_TIMEOUT,
     DEFAULT_WIDTH,
     DEFAULT_WRITE_METADATA,
     DOMAIN,
     MAX_SLOTS,
     RETENTION_OVERWRITE,
-    UNIT_HOURS,
 )
 from .providers import (
     ImageRequest,
@@ -158,7 +151,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             hass,
             _LOGGER,
             name=f"{DOMAIN}:{entry.title}",
-            update_interval=self.interval,
+            update_interval=None,
         )
 
     # ------------------------------------------------------------------
@@ -167,15 +160,6 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
     def _opt(self, key: str, default: Any) -> Any:
         value = self.options.get(key, default)
         return default if value is None else value
-
-    @property
-    def interval(self) -> timedelta:
-        amount = int(self._opt(CONF_INTERVAL, DEFAULT_INTERVAL) or DEFAULT_INTERVAL)
-        amount = max(amount, 1)
-        unit = self._opt(CONF_INTERVAL_UNIT, DEFAULT_INTERVAL_UNIT)
-        if unit == UNIT_HOURS:
-            return timedelta(hours=amount)
-        return timedelta(minutes=amount)
 
     @property
     def output_dir(self) -> str:
@@ -208,7 +192,7 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             slot = SlotState(
                 index=index,
                 name=str(raw.get(CONF_SLOT_NAME) or f"Image {index + 1}"),
-                enabled=bool(raw.get(CONF_SLOT_ENABLED, index == 0)),
+                enabled=True,
                 filename=storage.sanitize_filename(
                     raw.get(CONF_SLOT_FILENAME) or DEFAULT_SLOT_FILENAMES[index]
                 ),
@@ -257,18 +241,13 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
     # Generation
     # ------------------------------------------------------------------
     async def _async_update_data(self) -> dict[int, SlotState]:
-        """Scheduled run: generate every enabled slot, staggered."""
-        await self.async_generate_all(source="schedule")
+        """Generation on demand (startup, button, service); no scheduling."""
+        await self.async_generate_all(source="startup")
         return {slot.index: slot for slot in self.slots}
 
     async def async_generate_all(self, source: str = "manual") -> None:
-        stagger = int(self._opt(CONF_STAGGER, DEFAULT_STAGGER))
-        enabled = [slot for slot in self.slots if slot.enabled]
-        for position, slot in enumerate(enabled):
+        for slot in self.slots:
             await self.async_generate_slot(slot.index, source=source)
-            if position < len(enabled) - 1 and stagger > 0:
-                _LOGGER.debug("Waiting %ss before the next slot (rate limit)", stagger)
-                await asyncio.sleep(stagger)
 
     async def async_generate_slot(self, index: int, source: str = "manual") -> bool:
         """Generate and persist one image. Returns True on success."""
@@ -543,13 +522,6 @@ class AiImageTaskCoordinator(DataUpdateCoordinator[dict[int, SlotState]]):
             slot.prompt = prompt
         if negative_prompt is not None:
             slot.negative_prompt = negative_prompt
-        self.async_update_listeners()
-
-    def set_enabled(self, index: int, enabled: bool) -> None:
-        slot = self.get_slot(index)
-        if slot is None:
-            return
-        slot.enabled = enabled
         self.async_update_listeners()
 
     @property

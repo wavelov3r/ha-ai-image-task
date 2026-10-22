@@ -7,10 +7,10 @@ from typing import Final
 DOMAIN: Final = "ai_image_task"
 MANUFACTURER: Final = "AI Image Task"
 
-PLATFORMS: Final = ["image", "sensor", "button", "switch", "text"]
+PLATFORMS: Final = ["image", "sensor", "button", "text"]
 
-# Maximum number of image slots handled by a single config entry.
-MAX_SLOTS: Final = 2
+# Each config entry generates exactly one image; add more entries for more images.
+MAX_SLOTS: Final = 1
 
 # ---------------------------------------------------------------------------
 # Global (entry level) configuration keys

@@ -1,6 +1,6 @@
 generate:
   name: Generate now
-  description: Force an immediate generation for one or both image slots.
+  description: Force an immediate generation of the image.
   fields:
     config_entry_id:
       name: Config entry
@@ -11,7 +11,7 @@ generate:
           integration: ai_image_task
     slot:
       name: Slot
-      description: "1, 2 or 'all'."
+      description: "1 or 'all'."
       required: false
       default: all
       example: "1"
@@ -20,7 +20,6 @@ generate:
           options:
             - "all"
             - "1"
-            - "2"
 
 set_prompt:
   name: Set prompt
@@ -37,13 +36,13 @@ set_prompt:
           integration: ai_image_task
     slot:
       name: Slot
-      description: Image slot (1 or 2).
+      description: Image slot (always 1).
       required: true
       example: 1
       selector:
         number:
           min: 1
-          max: 2
+          max: 1
           mode: box
     prompt:
       name: Prompt
@@ -86,4 +85,3 @@ clear_history:
           options:
             - "all"
             - "1"
-            - "2"

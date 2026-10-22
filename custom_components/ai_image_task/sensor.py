@@ -61,7 +61,6 @@ class AiImageTaskStatusSensor(AiImageTaskEntity, SensorEntity):
             "history_count": slot.history_count,
             "output_dir": self.coordinator.output_dir,
             "retention_mode": self.coordinator.retention_mode,
-            "update_interval": str(self.coordinator.interval),
         }
 
 

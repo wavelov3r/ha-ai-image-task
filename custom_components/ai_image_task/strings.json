@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "AI Image Task - general settings",
-        "description": "Choose the image provider and how often the images should be refreshed.",
+        "description": "Choose the image provider.",
         "data": {
           "name": "Name",
           "provider": "Provider",
@@ -24,14 +24,11 @@
           "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
           "provider_openai_compatible_base_url": "OpenAI-compatible — API base URL",
           "provider_openai_compatible_clear": "OpenAI-compatible — Clear saved credentials",
-          "update_interval": "Update interval",
-          "update_interval_unit": "Interval unit",
           "output_dir": "Output folder",
           "retention_mode": "Retention policy",
           "keep_count": "Keep last N images",
           "keep_days": "Delete images older than (days)",
           "history_subdir": "History subfolder",
-          "stagger_seconds": "Delay between the two images (s)",
           "timeout": "Request timeout (s)",
           "retries": "Retries on failure",
           "negative_template": "Negative prompt template",
@@ -51,22 +48,18 @@
           "provider_openai_compatible_account": "Informational only; not sent to the API.",
           "provider_openai_compatible_api_key": "Sent as a bearer token when provided; endpoint costs depend on its service.",
           "provider_openai_compatible_base_url": "Required to configure this endpoint; costs depend on the service.",
-          "update_interval": "How often both images are regenerated.",
           "output_dir": "Absolute path inside Home Assistant. Anything under /config/www is reachable at /local/...",
           "retention_mode": "Overwrite: only the current file. Keep last N: archives the previous versions and keeps the newest N. Keep for N days: archives and deletes anything older.",
           "keep_count": "Only used by the 'Keep last N' policy.",
           "keep_days": "Only used by the 'Keep for N days' policy.",
           "history_subdir": "Subfolder of the output folder where old versions are archived. Leave empty to archive next to the current file.",
-          "stagger_seconds": "Anonymous Pollinations usage is limited to about one request every 15 seconds.",
           "negative_template": "How the negative words are merged into the prompt. Placeholders: {prompt} and {negative}.",
-          "generate_on_start": "Disable if you prefer to wait for the first scheduled run."
+          "generate_on_start": "Disable if you prefer to generate manually."
         }
       },
       "slot_1": {
         "title": "Image 1",
-        "description": "Settings for the first image.",
         "data": {
-          "enabled": "Enabled",
           "name": "Slot name",
           "filename": "File name",
           "model": "Model",
@@ -101,40 +94,6 @@
           "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
           "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
         }
-      },
-      "slot_2": {
-        "title": "Image 2",
-        "description": "Settings for the second image. Turn 'Enabled' off if you only need one image.",
-        "data": {
-          "enabled": "Enabled",
-          "name": "Slot name",
-          "filename": "File name",
-          "model": "Model",
-          "width": "Width (px)",
-          "height": "Height (px)",
-          "seed": "Seed",
-          "quality": "Quality",
-          "transparent": "Transparent background",
-          "safe": "Safe mode",
-          "nologo": "Remove watermark",
-          "private": "Private generation",
-          "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL",
-          "exact_size": "Resize to the exact size",
-          "fit": "Resize mode",
-          "output_format": "File format",
-          "color_mode": "Colour mode",
-          "bw_levels": "Black & white levels (2-8)"
-        },
-        "data_description": {
-          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
-          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
-          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
-          "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
-          "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
-          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
-        }
       }
     },
     "error": {
@@ -153,8 +112,7 @@
         "title": "AI Image Task",
         "menu_options": {
           "general": "General settings",
-          "slot_1": "Image 1",
-          "slot_2": "Image 2"
+          "slot_1": "Image"
         }
       },
       "general": {
@@ -179,14 +137,11 @@
           "provider_openai_compatible_api_key": "OpenAI-compatible — API key",
           "provider_openai_compatible_base_url": "OpenAI-compatible — API base URL",
           "provider_openai_compatible_clear": "OpenAI-compatible — Clear saved credentials",
-          "update_interval": "Update interval",
-          "update_interval_unit": "Interval unit",
           "output_dir": "Output folder",
           "retention_mode": "Retention policy",
           "keep_count": "Keep last N images",
           "keep_days": "Delete images older than (days)",
           "history_subdir": "History subfolder",
-          "stagger_seconds": "Delay between the two images (s)",
           "timeout": "Request timeout (s)",
           "retries": "Retries on failure",
           "negative_template": "Negative prompt template",
@@ -197,40 +152,6 @@
       "slot_1": {
         "title": "Image 1",
         "data": {
-          "enabled": "Enabled",
-          "name": "Slot name",
-          "filename": "File name",
-          "model": "Model",
-          "width": "Width (px)",
-          "height": "Height (px)",
-          "seed": "Seed",
-          "quality": "Quality",
-          "transparent": "Transparent background",
-          "safe": "Safe mode",
-          "nologo": "Remove watermark",
-          "private": "Private generation",
-          "enhance": "Enhance the prompt",
-          "reference_image": "Reference image URL",
-          "exact_size": "Resize to the exact size",
-          "fit": "Resize mode",
-          "output_format": "File format",
-          "color_mode": "Colour mode",
-          "bw_levels": "Black & white levels (2-8)"
-        },
-        "data_description": {
-          "width": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
-          "height": "Requested size. Backends refuse sides below 512px, so a larger image is generated and then resized down.",
-          "exact_size": "Crop/resize the picture so the saved file matches the width and height above exactly (needs Pillow).",
-          "fit": "cover crops to fill, contain adds white bars, stretch distorts.",
-          "output_format": "auto follows the file extension (a .png file really contains PNG). Pollinations always returns JPEG, so pick PNG for ESPHome online_image.",
-          "color_mode": "grayscale and black & white (dithered) produce much smaller files for e-ink panels.",
-          "bw_levels": "Only used when Colour mode is 'bw': number of Floyd-Steinberg dithered gray shades (2 = pure black/white)."
-        }
-      },
-      "slot_2": {
-        "title": "Image 2",
-        "data": {
-          "enabled": "Enabled",
           "name": "Slot name",
           "filename": "File name",
           "model": "Model",
@@ -269,12 +190,6 @@
     }
   },
   "selector": {
-    "interval_unit": {
-      "options": {
-        "minutes": "Minutes",
-        "hours": "Hours"
-      }
-    },
     "retention_mode": {
       "options": {
         "overwrite": "Overwrite (no history)",
@@ -337,11 +252,6 @@
         "name": "Clear history"
       }
     },
-    "switch": {
-      "auto_update": {
-        "name": "Automatic update"
-      }
-    },
     "text": {
       "prompt": {
         "name": "Prompt"
@@ -354,7 +264,7 @@
   "services": {
     "generate": {
       "name": "Generate now",
-      "description": "Force an immediate generation for one or both image slots.",
+      "description": "Force an immediate generation of the image.",
       "fields": {
         "config_entry_id": {
           "name": "Config entry",
